@@ -1,0 +1,10 @@
+{
+  "files.associations": {
+    "chrono": "cpp",
+    "thread": "cpp",
+    "functional": "cpp"
+  },
+  "cmake.configureSettings": {
+    "mingw.path": "C:\\msys64\\mingw32" // Adjust the path to your MinGW installation
+  }
+}

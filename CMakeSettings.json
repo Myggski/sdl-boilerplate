@@ -1,0 +1,32 @@
+﻿{
+  "configurations": [
+    {
+      "name": "x64",
+      "generator": "MinGW Makefiles",
+      "configurationType": "Release",
+      "buildRoot": "${workspaceFolder}/build/x64",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-j4",
+      "variables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_C_COMPILER": "gcc"
+      }
+    },
+    {
+      "name": "x86",
+      "generator": "MinGW Makefiles",
+      "configurationType": "Release",
+      "buildRoot": "${workspaceFolder}/build/x86",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-j4",
+      "variables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_C_COMPILER": "gcc"
+      }
+    }
+  ]
+}
