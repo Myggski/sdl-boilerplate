@@ -44,6 +44,14 @@ int main(int argc, char *argv[])
     auto lambda = [](int val)
     { std::cout << "Lambda: " << val << std::endl; };
 
+    int id = event.add(lambda);
+
+    event.broadcast(42);
+
+    event.remove(id);
+
+    event.broadcast(13);
+
     while (!quit)
     {
         // Handle events
