@@ -83,7 +83,7 @@ find_path(SDL2_INCLUDE_DIR SDL.h
   include/SDL2 include
 )
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+if(ARCH MATCHES "x64")
   set(VC_LIB_PATH_SUFFIX lib/x64)
 else()
   set(VC_LIB_PATH_SUFFIX lib/x86)

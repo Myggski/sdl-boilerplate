@@ -11,13 +11,13 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-# Check if the size of pointers is 4 (32-bit) or 8 (64-bit)
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    set(ARCH "x86")
-elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+# Add debug flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -g")
+
+if((NOT ARCH AND ${CMAKE_SIZEOF_VOID_P} MATCHES 8))
     set(ARCH "x64")
-else()
-    message(FATAL_ERROR "Unsupported architecture")
+elseif(NOT ARCH)
+    set(ARCH "x86")
 endif()
 
 # Set the build directory based on the architecture
@@ -39,18 +39,12 @@ set(SOURCES
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Set the output directory for the executable
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIR}
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BUILD_DIR}
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIR}
-)
+if(ARCH MATCHES "x86")
+    set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+endif()
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS})
-
-# Link directories
-target_link_directories(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARY_DIRS})
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES} ${SDL2_TTF_LIBRARIES})
@@ -65,13 +59,14 @@ set(CMAKE_BINARY_DIR ${BUILD_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${BUILD_DIR})
 set(LIBRARY_OUTPUT_PATH ${BUILD_DIR})
 set(CMAKE_INSTALL_PREFIX ${INSTALL_DIR} CACHE PATH "Install prefix" FORCE)
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${ARCH})
 
-# Print information about the chosen architecture
-message(STATUS "Selected architecture: ${ARCH}")
-message(STATUS "Build directory: ${BUILD_DIR}")
-message(STATUS "Install directory: ${INSTALL_DIR}")
+# Set the output directory for the executable
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIR}
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BUILD_DIR}
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIR}
+)
 
 # Copy assets to the build directory during build
 file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${BUILD_DIR})
@@ -83,3 +78,9 @@ file(COPY
     ${SDL2_TTF_INCLUDE_DIRS}/../lib/${ARCH}/SDL2_ttf.dll # Fix the DLL path
     DESTINATION ${BUILD_DIR}
 )
+
+# Print information about the chosen architecture
+message(STATUS "Selected architecture: ${ARCH}")
+message(STATUS "Build directory: ${BUILD_DIR}")
+message(STATUS "Install directory: ${INSTALL_DIR}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")

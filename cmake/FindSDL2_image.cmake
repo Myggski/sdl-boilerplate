@@ -52,12 +52,6 @@ find_path(SDL2_IMAGE_INCLUDE_DIR SDL_image.h
   include/SDL2 include
 )
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(VC_LIB_PATH_SUFFIX lib/x64)
-else()
-  set(VC_LIB_PATH_SUFFIX lib/x86)
-endif()
-
 if(NOT SDL2_IMAGE_LIBRARY AND SDL2IMAGE_LIBRARY)
   set(SDL2_IMAGE_LIBRARY ${SDL2IMAGE_LIBRARY} CACHE FILEPATH "file cache entry initialized from old variable name")
 endif()

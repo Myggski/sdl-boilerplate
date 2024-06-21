@@ -2,21 +2,25 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "configure x64",
+      "label": "configure Debug x64",
       "type": "shell",
       "command": "cmake",
       "args": [
         "-S",
-        ".",
+        ".", // Source directory
         "-B",
-        "build/x64",
+        "build/x64", // Build directory
         "-G",
-        "Visual Studio 17 2022",
-        "-A",
-        "x64",
-        "-DCMAKE_BUILD_TYPE=Debug"
+        "MinGW Makefiles", // Generator
+        "-DCMAKE_C_COMPILER=C:/Program Files/LLVM/bin/clang.exe",
+        "-DCMAKE_CXX_COMPILER=C:/Program Files/LLVM/bin/clang++.exe",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DARCH=x64" // Specify x64 platform
       ],
-      "group": "none"
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     },
     {
       "label": "Build Debug x64",
@@ -24,7 +28,7 @@
       "command": "cmake",
       "args": [
         "--build",
-        "${workspaceFolder}/build/x64",
+        "${workspaceFolder}\\build\\x64",
         "--config",
         "Debug",
         "--target",
@@ -35,11 +39,11 @@
         "isDefault": true
       },
       "dependsOn": [
-        "configure x64"
+        "configure Debug x64"
       ]
     },
     {
-      "label": "configure x64",
+      "label": "configure Debug x86",
       "type": "shell",
       "command": "cmake",
       "args": [
@@ -48,12 +52,16 @@
         "-B",
         "build/x86",
         "-G",
-        "Visual Studio 17 2022",
-        "-A",
-        "x86",
-        "-DCMAKE_BUILD_TYPE=Debug"
+        "MinGW Makefiles",
+        "-DCMAKE_C_COMPILER=C:/Program Files/LLVM/bin/clang.exe",
+        "-DCMAKE_CXX_COMPILER=C:/Program Files/LLVM/bin/clang++.exe",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DARCH=x86" // Specify x86 platform
       ],
-      "group": "none"
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     },
     {
       "label": "Build Debug x86",
@@ -61,7 +69,7 @@
       "command": "cmake",
       "args": [
         "--build",
-        "${workspaceFolder}/build/x86",
+        "${workspaceFolder}\\build\\x86",
         "--config",
         "Debug",
         "--target",
@@ -71,8 +79,8 @@
         "kind": "build",
         "isDefault": true
       },
-      "dependsOn": [ 
-        "configure x86"
+      "dependsOn": [
+        "configure Debug x86"
       ]
     }
   ]

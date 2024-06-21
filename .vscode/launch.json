@@ -20,7 +20,7 @@
         }
       ],
       "preLaunchTask": "Build Debug x64", // This needs to be the same name as in the "label" property in tasks.json
-      "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe" // Adjust this to point to your GDB executable
+      "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe" // Adjust this to point to your GDB executable
     },
     {
       "name": "C++ Launch (x86)",
@@ -31,7 +31,7 @@
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],
-      "externalConsole": false,
+      "externalConsole": true,
       "MIMode": "gdb",
       "setupCommands": [
         {
@@ -41,7 +41,7 @@
         }
       ],
       "preLaunchTask": "Build Debug x86", // This needs to be the same name as in the "label" property in tasks.json
-      "miDebuggerPath": "C:/msys64/mingw32/bin/gdb.exe" // Adjust this to point to your GDB executable
+      "miDebuggerPath": "C:\\msys64\\mingw32\\bin\\gdb.exe" // Adjust this to point to your GDB executable
     }
   ]
 }

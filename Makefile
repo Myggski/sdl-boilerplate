@@ -12,7 +12,6 @@ SOURCES = $(wildcard $(SOURCE_DIR)/*.cpp)
 OBJECTS = $(patsubst $(SOURCE_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
 
 TARGET = SDL2Boilerplate
-
 $(BUILD_DIR)/$(TARGET): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 
