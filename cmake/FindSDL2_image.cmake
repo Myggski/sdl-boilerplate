@@ -35,34 +35,18 @@
 # Created by Eric Wing. This was influenced by the FindSDL.cmake
 # module, but with modifications to recognize OS X frameworks and
 # additional Unix paths (FreeBSD, etc).
-set(SDL2_IMAGE_DIR $ENV{SDL2IMAGEDIR})
-
-if(NOT SDL2_IMAGE_INCLUDE_DIR AND SDL2IMAGE_INCLUDE_DIR)
-  set(SDL2_IMAGE_INCLUDE_DIR ${SDL2IMAGE_INCLUDE_DIR} CACHE PATH "directory cache entry initialized from old variable name")
-endif()
 
 find_path(SDL2_IMAGE_INCLUDE_DIR SDL_image.h
   HINTS
-  ENV SDL2IMAGEDIR
-  ENV SDL2DIR
-  ${SDL2_DIR}
-  PATH_SUFFIXES SDL2
-
-  # path suffixes to search inside ENV{SDL2DIR}
-  include/SDL2 include
+  ${CMAKE_PREFIX_PATH}
+  PATH_SUFFIXES SDL2_image/include
 )
-
-if(NOT SDL2_IMAGE_LIBRARY AND SDL2IMAGE_LIBRARY)
-  set(SDL2_IMAGE_LIBRARY ${SDL2IMAGE_LIBRARY} CACHE FILEPATH "file cache entry initialized from old variable name")
-endif()
 
 find_library(SDL2_IMAGE_LIBRARY
   NAMES SDL2_image
   HINTS
-  ENV SDL2IMAGEDIR
-  ENV SDL2DIR
-  ${SDL2_DIR}
-  PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
+  ${CMAKE_PREFIX_PATH}
+  PATH_SUFFIXES SDL2_image/${VC_LIB_PATH_SUFFIX}
 )
 
 if(SDL2_IMAGE_INCLUDE_DIR AND EXISTS "${SDL2_IMAGE_INCLUDE_DIR}/SDL2_image.h")

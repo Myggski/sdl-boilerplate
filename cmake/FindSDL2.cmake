@@ -71,16 +71,11 @@
 # "SDL.h", not <SDL/SDL.h>. This is done for portability reasons
 # because not all systems place things in SDL/ (see FreeBSD).
 
-set(SDL2_DIR $ENV{SDL2DIR})
 
 find_path(SDL2_INCLUDE_DIR SDL.h
   HINTS
-  ENV SDL2DIR
-  ${SDL2_DIR}
-  PATH_SUFFIXES SDL2
-
-  # path suffixes to search inside ENV{SDL2DIR}
-  include/SDL2 include
+  ${CMAKE_PREFIX_PATH}
+  PATH_SUFFIXES SDL2/include
 )
 
 if(ARCH MATCHES "x64")
@@ -92,9 +87,8 @@ endif()
 find_library(SDL2_LIBRARY_TEMP
   NAMES SDL2
   HINTS
-  ENV SDL2DIR
-  ${SDL2_DIR}
-  PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
+  ${CMAKE_PREFIX_PATH}
+  PATH_SUFFIXES SDL2/${VC_LIB_PATH_SUFFIX}
 )
 
 # Hide this cache variable from the user, it's an internal implementation
