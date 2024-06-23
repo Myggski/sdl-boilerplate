@@ -1,29 +1,32 @@
 ﻿cmake_minimum_required(VERSION 3.15)
-project(sdl-boilerplate)
+
+# Specify the C and C++ compilers
+set(CMAKE_CXX_COMPILER "C:/Program Files/LLVM/bin/clang++.exe" CACHE STRING "CPP Compiler" FORCE) # Path to clang-compiler
+set(CMAKE_C_COMPILER "C:/Program Files/LLVM/bin/clang.exe" CACHE STRING "C Compiler" FORCE) # Path to clang-compiler
+set(CMAKE_RC_COMPILER "C:/Program Files/LLVM/bin/llvm-rc.exe" CACHE STRING "RC Compiler" FORCE) # Path to the resource compiler
 
 # Set the C++ standard to C++23
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Set the build type, will fix for release later
+set(CMAKE_BUILD_TYPE Debug)
+
+# The project
+project(sdl-boilerplate)
+
+# Other CMake Modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-# Set the build type if not defined
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
-endif()
-
-# Add debug flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -g")
-
+# Set architecture
 if((NOT ARCH AND ${CMAKE_SIZEOF_VOID_P} MATCHES 8))
     set(ARCH "x64")
 elseif(NOT ARCH)
     set(ARCH "x86")
 endif()
 
-# Set the build directory based on the architecture
+# Set the build and install directories based on the architecture
 set(BUILD_DIR "${CMAKE_SOURCE_DIR}/build/${ARCH}")
-
-# Set the installation directory based on the architecture
 set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/install/${ARCH}")
 
 # Find SDL2 things
@@ -39,7 +42,10 @@ set(SOURCES
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-if(ARCH MATCHES "x86")
+# Set compile options for the target
+target_compile_options(${PROJECT_NAME} PRIVATE -g)
+
+if(ARCH STREQUAL "x86")
     set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 endif()
 
@@ -49,13 +55,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_I
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES} ${SDL2_TTF_LIBRARIES})
 
-# Set the build type
-if(CMAKE_BUILD_TYPE STREQUAL "")
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-endif()
-
 # Set the build and install directories
-set(CMAKE_BINARY_DIR ${BUILD_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${BUILD_DIR})
 set(LIBRARY_OUTPUT_PATH ${BUILD_DIR})
 set(CMAKE_INSTALL_PREFIX ${INSTALL_DIR} CACHE PATH "Install prefix" FORCE)
@@ -84,3 +84,4 @@ message(STATUS "Selected architecture: ${ARCH}")
 message(STATUS "Build directory: ${BUILD_DIR}")
 message(STATUS "Install directory: ${INSTALL_DIR}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Compiler type: ${CMAKE_CXX_COMPILER}")

@@ -1,22 +1,45 @@
 # sdl-boilerplate
 
 ## Overview
-
-Welcome to my Game Development Toolbox! This project serves as my personal toolkit for crafting games with SDL2 using CMake and MinGW. The goal here? Efficiency and learning. Instead of reinventing the wheel for every game, I'm building a collection of reusable features and leveling up my skills in C++, CMake, and Visual Studio Code along the way.
-
-Regarding the persistent presence of the .vscode folder – it's intentionally sticking around. Setting up Visual Studio Code using C++ can be a head-scratcher in my opinion, and finding the right setup isn't always a cakewalk. Even if it's not perfect, this folder is here to get the job done. Let's call it a functional work in progress.
+Welcome to my SDL Toolbox! This project is a personal toolkit for crafting games with SDL2 using CMake and LLVM/Clang. It aims to enhance efficiency and learning by building reusable features and improving skills in modern C++, CMake, and Visual Studio Code.
 
 ## Purpose
-This toolkit isn't just about storing code snippets; it's a strategy. By reusing proven features, I streamline game development. Think of it as a Swiss Army knife for game creators, ensuring a smoother and more enjoyable development process.
+This toolkit is a personal project aimed at simplifying game development by reusing effective features that I find useful. It's intended to be a practical tool, enhancing the development experience and growing in usefulness as I create more games.
 
-## Getting Started 
+## Prerequisites
+Before building the project, ensure you have the following installed:
 
-1. git clone https://github.com/your-username/your-toolbox-project.git
-2. Make sure to have [MinGW](https://www.mingw-w64.org/) and [CMake](https://cmake.org/download/) installed
-3. Make sure that the paths to mingw64 in .vscode/c_cpp_properties.json, .vscode/launch.json and .vscode/settings.json are correct
-4. Replace "sdl-boilerplate" inside CMakeLists.txt and tasks.json to your project name
-5. Add environment variables for SDL2DIR, SDL2IMAGEDIR, and SDL2TTFDIR, with the paths where they are installed. This will hopefully change into one 'SDK' folder instead, if possible, in the future.
+- **CMake**: Version 3.15 or higher. Download and install from [cmake.org](https://cmake.org/download/).
+- **LLVM/Clang**: Required for compiling with Clang on Windows. Install LLVM/Clang from [llvm.org](https://llvm.org/releases/download.html).
+- **Ninja**: Build system. Download and extract Ninja from [github.com/ninja-build/ninja/releases](https://github.com/ninja-build/ninja/releases).
+- **SDL2**: Required libraries. You may need to download SDL2 development libraries and adjust paths accordingly in your CMake configuration.
 
-Hopefully you will have it up and running offering Build Debug x64 and Build Debug x86 options. Stay tuned for two additional choices: Build Release x64 and Build Release x86.
+## Build Instructions
 
+Currently, I only have Debug setup, but I hope to have Release prepared as well quite soon.
 
+### Configure and Build (Debug, x64/x86)
+Open a terminal and execute the following commands:
+
+```bash
+# Navigate to your project directory
+cd path/to/your/project
+
+# Example 1: Configure and build for x64 architecture
+cmake -S . -B build/x64 -G Ninja -DARCH=x64
+cmake --build build/x64 --config Debug --target sdl-boilerplate
+
+# Example 2: Configure and build for x86 architecture
+cmake -S . -B build/x86 -G Ninja -DARCH=x86
+cmake --build build/x86 --config Debug --target sdl-boilerplate
+```
+
+> [!NOTE]
+> Replace 'path/to/your/project' with the actual path to your project directory. Adjust paths and configurations as needed based on your environment setup and SDL2 installation.
+
+### Environment variables
+To ensure proper functionality, you need to set up the following environment variables:
+
+**CMAKE_PREFIX_PATH:** Path to your SDK folder containing necessary projects like SDL2, SDL2_ttf, and SDL2_image. <br /> *Example: 'C:\Code\sdks'*
+
+**PATH:** Add LLVM bin directory to PATH. <br /> *Example: C:\Program Files\LLVM\bin*

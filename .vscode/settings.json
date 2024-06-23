@@ -1,10 +1,9 @@
 {
-  "cmake.generator": "MinGW Makefiles",
+  "cmake.generator": "Ninja",
   "cmake.preferredGenerators": [
-    "MinGW Makefiles"
+    "Ninja"
   ],
   "cmake.configureOnOpen": true,
-  "C_Cpp.errorSquiggles": "disabled",
   "files.associations": {
     "thread": "cpp",
     "iostream": "cpp"

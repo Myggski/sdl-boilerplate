@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "configure Debug x64",
+      "label": "Configure Debug x64",
       "type": "shell",
       "command": "cmake",
       "args": [
@@ -11,11 +11,8 @@
         "-B",
         "build/x64", // Build directory
         "-G",
-        "MinGW Makefiles", // Generator
-        "-DCMAKE_C_COMPILER=C:/Program Files/LLVM/bin/clang.exe",
-        "-DCMAKE_CXX_COMPILER=C:/Program Files/LLVM/bin/clang++.exe",
-        "-DCMAKE_BUILD_TYPE=Debug",
-        "-DARCH=x64" // Specify x64 platform
+        "Ninja",
+        "-DARCH=x64",
       ],
       "group": {
         "kind": "build",
@@ -39,11 +36,11 @@
         "isDefault": true
       },
       "dependsOn": [
-        "configure Debug x64"
+        "Configure Debug x64"
       ]
     },
     {
-      "label": "configure Debug x86",
+      "label": "Configure Debug x86",
       "type": "shell",
       "command": "cmake",
       "args": [
@@ -52,11 +49,8 @@
         "-B",
         "build/x86",
         "-G",
-        "MinGW Makefiles",
-        "-DCMAKE_C_COMPILER=C:/Program Files/LLVM/bin/clang.exe",
-        "-DCMAKE_CXX_COMPILER=C:/Program Files/LLVM/bin/clang++.exe",
-        "-DCMAKE_BUILD_TYPE=Debug",
-        "-DARCH=x86" // Specify x86 platform
+        "Ninja",
+        "-DARCH=x86",
       ],
       "group": {
         "kind": "build",
@@ -80,7 +74,7 @@
         "isDefault": true
       },
       "dependsOn": [
-        "configure Debug x86"
+        "Configure Debug x86"
       ]
     }
   ]
