@@ -37,9 +37,11 @@ cmake --build build/x86 --config Debug --target sdl-boilerplate
 > [!NOTE]
 > Replace 'path/to/your/project' with the actual path to your project directory. Adjust paths and configurations as needed based on your environment setup and SDL2 installation.
 
-### Environment variables
+## Environment variables
 To ensure proper functionality, you need to set up the following environment variables:
 
-**CMAKE_PREFIX_PATH:** Path to your SDK folder containing necessary projects like SDL2, SDL2_ttf, and SDL2_image. <br /> *Example: 'C:\Code\sdks'*
+### CMAKE_PREFIX_PATH 
+Path to your SDK folder containing necessary projects like SDL2, SDL2_ttf, and SDL2_image. <br /> *Example: 'C:\Code\sdks'*
 
-**PATH:** Add LLVM bin directory to PATH. <br /> *Example: C:\Program Files\LLVM\bin*
+### PATH 
+Add LLVM bin directory to PATH. <br /> *Example: C:\Program Files\LLVM\bin*
