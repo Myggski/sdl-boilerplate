@@ -71,7 +71,6 @@
 # "SDL.h", not <SDL/SDL.h>. This is done for portability reasons
 # because not all systems place things in SDL/ (see FreeBSD).
 
-
 find_path(SDL2_INCLUDE_DIR SDL.h
   HINTS
   ${CMAKE_PREFIX_PATH}
@@ -105,9 +104,8 @@ if(NOT SDL2_BUILDING_LIBRARY)
     find_library(SDL2MAIN_LIBRARY
       NAMES SDL2main
       HINTS
-      ENV SDL2DIR
-      ${SDL2_DIR}
-      PATH_SUFFIXES lib ${VC_LIB_PATH_SUFFIX}
+      ${CMAKE_PREFIX_PATH}
+      PATH_SUFFIXES SDL2/${VC_LIB_PATH_SUFFIX}
     )
   endif()
 endif()
@@ -180,7 +178,7 @@ if(SDL2_INCLUDE_DIR AND EXISTS "${SDL2_INCLUDE_DIR}/SDL2_version.h")
   unset(SDL2_VERSION_PATCH)
 endif()
 
-set(SDL2_LIBRARIES ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY})
+set(SDL2_LIBRARIES ${SDL2_LIBRARY})
 set(SDL2_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)

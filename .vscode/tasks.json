@@ -27,9 +27,7 @@
         "--build",
         "${workspaceFolder}\\build\\x64",
         "--config",
-        "Debug",
-        "--target",
-        "sdl-boilerplate"
+        "Debug"
       ],
       "group": {
         "kind": "build",
@@ -65,9 +63,7 @@
         "--build",
         "${workspaceFolder}\\build\\x86",
         "--config",
-        "Debug",
-        "--target",
-        "sdl-boilerplate"
+        "Debug"
       ],
       "group": {
         "kind": "build",
