@@ -1,9 +1,12 @@
+#pragma once
+
 #include "Core.h"
 #include "GameEngine.h"
+#include <memory>
 
 int main()
 {
-  Engine::GameEngineData *EngineData = Engine::CreateGameEngineData();
+  std::unique_ptr<Engine::GameEngineData> EngineData{Engine::CreateGameEngineData()};
 
   // Check if function pointers are initialized
   if (!EngineData)
@@ -13,7 +16,7 @@ int main()
     return 1;
   }
 
-  Engine::GameEngine Engine = Engine::GameEngine(EngineData);
+  Engine::GameEngine Engine{Engine::GameEngine(std::move(EngineData))};
   Engine.Run();
 
   return 0;

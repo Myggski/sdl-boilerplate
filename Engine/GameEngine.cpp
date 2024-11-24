@@ -3,6 +3,7 @@
 #include "GameEngine.h"
 #include <SDL.h>
 #include <stdexcept>
+#include "src/InputManager.h"
 
 namespace Engine
 {
@@ -24,18 +25,26 @@ namespace Engine
       return false;
     }
 
-    Window = SDL_CreateWindow("SDL2 Boilerplate", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_SHOWN);
+    Window = SDL_CreateWindow("SDL2 Boilerplate", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1200, 800, SDL_WINDOW_SHOWN);
     if (!Window)
     {
       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
       return false;
     }
 
+    Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (Renderer == nullptr)
+    {
+      SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
+      return false;
+    }
+
     IsGameRunning = true;
+    InputManager::CreateInstance();
 
     if (EngineData != nullptr)
     {
-      EngineData->Initialize();
+      EngineData->Initialize(Window, Renderer);
     }
 
     return true;
@@ -43,32 +52,23 @@ namespace Engine
 
   void GameEngine::Update()
   {
-    SDL_Event Event;
-
     while (IsGameRunning)
     {
-      // Handle events
-      while (SDL_PollEvent(&Event) != 0)
-      {
-        if (Event.type == SDL_QUIT)
-        {
-          Shutdown();
-        }
-      }
+      InputManager::GetInstance().Pull();
 
       if (EngineData)
       {
         EngineData->Update(0.f);
+        EngineData->Draw(Renderer);
       }
 
       // Update the screen
+      SDL_RenderClear(Renderer);
       SDL_GL_SwapWindow(Window);
     }
 
-    // Destroy window
+    // Destroy window and quit SDL
     SDL_DestroyWindow(Window);
-
-    // Quit SDL
     SDL_Quit();
   }
 

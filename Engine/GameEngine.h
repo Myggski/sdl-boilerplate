@@ -4,30 +4,36 @@
 #include "PrecompiledHeader.h"
 
 struct SDL_Window;
+struct SDL_Renderer;
 
 namespace Engine
 {
+  class Application;
+
   struct ENGINE_API GameEngineData
   {
   public:
     GameEngineData(
-        const std::function<bool()> &Initialize,
+        const std::function<bool(SDL_Window *, SDL_Renderer *)> &Initialize,
         std::function<void(float)> Update,
+        std::function<void(SDL_Renderer *)> Draw,
         std::function<void()> Shutdown)
         : Initialize(Initialize),
           Update(Update),
+          Draw(Draw),
           Shutdown(Shutdown) {}
 
   public:
-    const std::function<bool()> Initialize;
+    const std::function<bool(SDL_Window *, SDL_Renderer *)> Initialize;
     const std::function<void(float)> Update;
+    const std::function<void(SDL_Renderer *)> Draw;
     const std::function<void()> Shutdown;
   };
 
   class ENGINE_API GameEngine
   {
   public:
-    GameEngine(GameEngineData *EngineData)
+    GameEngine(std::unique_ptr<GameEngineData> EngineData)
         : EngineData(std::move(EngineData)) {};
 
     void Run();
@@ -38,11 +44,12 @@ namespace Engine
     void Shutdown();
 
   private:
-    GameEngineData *EngineData;
-    SDL_Window *Window;
+    std::unique_ptr<GameEngineData> EngineData{nullptr};
+    SDL_Window *Window{nullptr};
+    SDL_Renderer *Renderer{nullptr};
 
-    bool IsGameRunning;
+    bool IsGameRunning{false};
   };
 
-  extern GameEngineData *CreateGameEngineData();
+  extern std::unique_ptr<GameEngineData> CreateGameEngineData();
 }
