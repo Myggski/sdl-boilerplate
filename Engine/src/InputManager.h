@@ -24,10 +24,11 @@ namespace Engine
   class ENGINE_API InputManager
   {
   public:
+    ~InputManager();
+
     static void CreateInstance();       // Creates the singleton instance
     static InputManager &GetInstance(); // Returns the singleton instance
 
-    void Pull();
     GameEvent<SDL_Event> &GetSDLEvent();
     bool IsKeyPressed(const SDL_Scancode Scancode) const;
     bool IsKeyPressedOnce(const SDL_Scancode Scancode);
@@ -39,7 +40,7 @@ namespace Engine
     inline int GetMouseY() const { return MouseY; }
 
   private:
-    InputManager() = default; // Private constructor for singleton
+    InputManager(); // Private constructor for singleton
 
     void OnKeyPressed(SDL_Event Event);
     void OnKeyReleased(SDL_Event Event);
@@ -57,7 +58,14 @@ namespace Engine
     int MouseX{0};
     int MouseY{0};
 
+    int KeyPressedEventId{-1};
+    int KeyReleaseEventId{-1};
+    int MousePressedEventId{-1};
+    int MouseReleasedEventId{-1};
+    int MouseMotionEventId{-1};
+
     // Game events
-    GameEvent<SDL_Event> OnSDLEvent;
+    GameEvent<SDL_Event>
+        OnSDLEvent;
   };
 }

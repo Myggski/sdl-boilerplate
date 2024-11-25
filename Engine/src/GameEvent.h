@@ -68,15 +68,15 @@ namespace Engine
     }
 
     // Remove a function from the event
-    void Remove(int id)
+    void Remove(int Id)
     {
       Functions.erase(
           std::remove_if(
               Functions.begin(),
               Functions.end(),
-              [id](const FunctionWrapper<Args...> &wrapper)
+              [Id](const FunctionWrapper<Args...> &wrapper)
               {
-                return wrapper.GetId() == id;
+                return wrapper.GetId() == Id;
               }),
           Functions.end());
     }

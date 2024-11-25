@@ -3,6 +3,8 @@
 #include "GameEngine.h"
 #include <SDL.h>
 #include <stdexcept>
+#include <chrono>
+#include "src/EventManager.h"
 #include "src/InputManager.h"
 
 namespace Engine
@@ -40,7 +42,11 @@ namespace Engine
     }
 
     IsGameRunning = true;
+    EventManager::CreateInstance();
     InputManager::CreateInstance();
+
+    SDLQuitEventId = Engine::EventManager::GetInstance().RegisterEventListener(SDL_QUIT, [&](const SDL_Event &Event)
+                                                                               { Shutdown(); });
 
     if (EngineData != nullptr)
     {
@@ -52,13 +58,41 @@ namespace Engine
 
   void GameEngine::Update()
   {
+    constexpr float FixedTimeStep{1.0f / 60.0f}; // 60 FPS
+    constexpr uint8_t MaxFrameSkip{5};           // Limit to prevent spiraling
+    float Lag{0.0f};
+
+    std::chrono::steady_clock::time_point PreviousTime{std::chrono::high_resolution_clock::now()};
+
     while (IsGameRunning)
     {
-      InputManager::GetInstance().Pull();
+      // Calculate delta time
+      std::chrono::steady_clock::time_point CurrentTime{std::chrono::high_resolution_clock::now()};
+      std::chrono::duration<float> ElapsedTime{CurrentTime - PreviousTime};
+      float DeltaTime = ElapsedTime.count();
+      PreviousTime = CurrentTime;
 
-      if (EngineData)
+      // Accumulate time to handle fixed-step updates
+      Lag += DeltaTime;
+
+      // Process input
+      EventManager::GetInstance().PollEvents();
+
+      // Fixed update loop
+      uint16_t UpdateCount{0};
+      while (Lag >= FixedTimeStep && UpdateCount < MaxFrameSkip)
       {
-        EngineData->Update(0.f);
+        if (EngineData)
+        {
+          EngineData->Update(FixedTimeStep);
+        }
+        Lag -= FixedTimeStep;
+        ++UpdateCount;
+      }
+
+      // Render only once per frame
+      if (IsGameRunning && EngineData)
+      {
         EngineData->Draw(Renderer);
       }
 
@@ -69,6 +103,7 @@ namespace Engine
 
     // Destroy window and quit SDL
     SDL_DestroyWindow(Window);
+    SDL_DestroyRenderer(Renderer);
     SDL_Quit();
   }
 
@@ -80,5 +115,7 @@ namespace Engine
     {
       EngineData->Shutdown();
     }
+
+    Engine::EventManager::GetInstance().RemoveEventListener(SDL_QUIT, SDLQuitEventId);
   }
 }

@@ -1,9 +1,36 @@
 
 #include "InputManager.h"
+#include "EventManager.h"
 
 namespace Engine
 {
   std::unique_ptr<InputManager> InputManager::Instance{nullptr};
+
+  InputManager::InputManager()
+  {
+    // Subscribe to SDL events
+    Engine::EventManager &EventManager{EventManager::EventManager::GetInstance()};
+    KeyPressedEventId = EventManager.RegisterEventListener(SDL_KEYDOWN, [](const SDL_Event &Event)
+                                                           { GetInstance().OnKeyPressed(Event); });
+    KeyReleaseEventId = EventManager.RegisterEventListener(SDL_KEYUP, [](const SDL_Event &Event)
+                                                           { GetInstance().OnKeyReleased(Event); });
+    MouseMotionEventId = EventManager.RegisterEventListener(SDL_MOUSEMOTION, [](const SDL_Event &Event)
+                                                            { GetInstance().OnMouseMotion(Event); });
+    MousePressedEventId = EventManager.RegisterEventListener(SDL_MOUSEBUTTONDOWN, [](const SDL_Event &Event)
+                                                             { GetInstance().OnMouseButtonDown(Event); });
+    MouseReleasedEventId = EventManager.RegisterEventListener(SDL_MOUSEBUTTONUP, [](const SDL_Event &Event)
+                                                              { GetInstance().OnMouseButtonUp(Event); });
+  }
+
+  InputManager::~InputManager()
+  {
+    Engine::EventManager &EventManager{EventManager::EventManager::GetInstance()};
+    EventManager.RemoveEventListener(SDL_KEYDOWN, KeyPressedEventId);
+    EventManager.RemoveEventListener(SDL_KEYUP, KeyReleaseEventId);
+    EventManager.RemoveEventListener(SDL_MOUSEMOTION, MouseMotionEventId);
+    EventManager.RemoveEventListener(SDL_MOUSEBUTTONDOWN, MousePressedEventId);
+    EventManager.RemoveEventListener(SDL_MOUSEBUTTONUP, MouseReleasedEventId);
+  }
 
   InputData::InputData(SDL_Scancode Scancode) : Scancode(Scancode) {}
 
@@ -19,42 +46,12 @@ namespace Engine
 
   InputManager &InputManager::GetInstance()
   {
-if (Instance == nullptr)
+    if (Instance == nullptr)
     {
-        throw std::logic_error("Instance of InputManager has not been created yet!");
+      throw std::logic_error("Instance of InputManager has not been created yet!");
     }
 
     return *Instance;
-  }
-
-  void InputManager::Pull()
-  {
-    SDL_Event Event;
-    PreviousMouseButtons = MouseButtons;
-
-    while (SDL_PollEvent(&Event))
-    {
-      switch (Event.type)
-      {
-      case SDL_KEYDOWN:
-        Engine::InputManager::GetInstance().OnKeyPressed(Event);
-        break;
-      case SDL_KEYUP:
-        Engine::InputManager::GetInstance().OnKeyReleased(Event);
-        break;
-      case SDL_MOUSEMOTION:
-        Engine::InputManager::GetInstance().OnMouseMotion(Event);
-        break;
-      case SDL_MOUSEBUTTONDOWN:
-        Engine::InputManager::GetInstance().OnMouseButtonDown(Event);
-        break;
-      case SDL_MOUSEBUTTONUP:
-        Engine::InputManager::GetInstance().OnMouseButtonUp(Event);
-        break;
-      }
-
-      OnSDLEvent.Broadcast(Event);
-    }
   }
 
   GameEvent<SDL_Event> &InputManager::GetSDLEvent()

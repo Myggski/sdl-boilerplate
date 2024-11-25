@@ -49,6 +49,7 @@ namespace Engine
     SDL_Renderer *Renderer{nullptr};
 
     bool IsGameRunning{false};
+    int SDLQuitEventId{-1};
   };
 
   extern std::unique_ptr<GameEngineData> CreateGameEngineData();

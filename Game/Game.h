@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 struct SDL_Renderer;
 struct SDL_Window;
 
@@ -9,6 +11,4 @@ namespace Game
   void Update(float DeltaTime);
   void Draw(SDL_Renderer *Renderer);
   void Shutdown();
-
-  SDL_Renderer *Renderer { nullptr };
 }
