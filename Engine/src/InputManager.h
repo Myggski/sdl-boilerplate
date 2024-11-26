@@ -30,7 +30,6 @@ namespace Engine
 
     GameEvent<SDL_Event> &GetSDLEvent();
     bool IsKeyPressed(const SDL_Scancode Scancode) const;
-    bool IsKeyPressedOnce(const SDL_Scancode Scancode);
     bool IsKeyReleased(const SDL_Scancode Scancode) const;
     bool IsKeyHeld(const SDL_Scancode Scancode) const;
     bool IsMouseButtonPressed(Uint8 button) const;
@@ -48,6 +47,7 @@ namespace Engine
     void OnMouseButtonUp(SDL_Event Event);
 
   private:
+
     static std::unique_ptr<InputManager> Instance; // Singleton instance
 
     std::unordered_map<SDL_Scancode, InputData> Keys;

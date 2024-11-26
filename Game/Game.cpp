@@ -36,7 +36,7 @@ namespace Game
   // Definition of static update function
   void Update(float DeltaTime)
   {
-    std::cout << "is D down? " << Engine::InputManager::GetInstance().IsKeyHeld(SDL_SCANCODE_D) << "\n";
+    std::cout << "is D pressed: " << Engine::InputManager::GetInstance().IsKeyPressed(SDL_SCANCODE_D) << " hold: " << Engine::InputManager::GetInstance().IsKeyHeld(SDL_SCANCODE_D) << "\n";
   }
 
   void Draw(SDL_Renderer *Renderer)

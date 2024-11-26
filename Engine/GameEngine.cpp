@@ -77,6 +77,11 @@ namespace Engine
       EventManager &EventManager{EventManager::GetInstance()};
       EventManager.PollEvents();
 
+      if (!IsGameRunning)
+      {
+        break;
+      }
+
       // Fixed update loop
       uint16_t UpdateCount{0};
       while (Lag >= FixedTimeStep && UpdateCount < MaxFrameSkip)
@@ -90,7 +95,7 @@ namespace Engine
       }
 
       // Render only once per frame
-      if (IsGameRunning && EngineData)
+      if (EngineData)
       {
         EngineData->Draw(Renderer);
       }

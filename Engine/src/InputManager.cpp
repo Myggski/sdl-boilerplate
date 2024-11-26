@@ -91,18 +91,6 @@ namespace Engine
     return Keys.contains(Scancode);
   }
 
-  bool InputManager::IsKeyPressedOnce(const SDL_Scancode Scancode)
-  {
-    if (!IsKeyPressed(Scancode))
-    {
-      return false;
-    }
-
-    Keys.at(Scancode).NumberOfRepeats += 1;
-
-    return IsKeyPressed(Scancode) && Keys.at(Scancode).NumberOfRepeats == 1;
-  }
-
   bool InputManager::IsKeyReleased(const SDL_Scancode Scancode) const
   {
     return !IsKeyPressed(Scancode);
@@ -110,13 +98,15 @@ namespace Engine
 
   bool InputManager::IsKeyHeld(const SDL_Scancode Scancode) const
   {
-    return Keys.contains(Scancode);
+    // Check if the key is pressed and has been held for a certain duration
+    auto Iterator = Keys.find(Scancode);
+    return Iterator != Keys.end() && Iterator->second.NumberOfRepeats >= 1;
   }
 
   bool InputManager::IsMouseButtonPressed(Uint8 button) const
   {
-    auto it = MouseButtons.find(button);
-    return it != MouseButtons.end() && it->second;
+    auto Iterator = MouseButtons.find(button);
+    return Iterator != MouseButtons.end() && Iterator->second;
   }
 
   bool InputManager::IsMouseButtonReleased(Uint8 button) const
