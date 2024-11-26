@@ -26,7 +26,6 @@ namespace Engine
   public:
     ~InputManager();
 
-    static void CreateInstance();       // Creates the singleton instance
     static InputManager &GetInstance(); // Returns the singleton instance
 
     GameEvent<SDL_Event> &GetSDLEvent();

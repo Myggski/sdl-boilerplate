@@ -42,8 +42,6 @@ namespace Engine
     }
 
     IsGameRunning = true;
-    EventManager::CreateInstance();
-    InputManager::CreateInstance();
 
     SDLQuitEventId = Engine::EventManager::GetInstance().RegisterEventListener(SDL_QUIT, [&](const SDL_Event &Event)
                                                                                { Shutdown(); });
@@ -69,14 +67,15 @@ namespace Engine
       // Calculate delta time
       std::chrono::steady_clock::time_point CurrentTime{std::chrono::high_resolution_clock::now()};
       std::chrono::duration<float> ElapsedTime{CurrentTime - PreviousTime};
-      float DeltaTime = ElapsedTime.count();
+      float DeltaTime{ElapsedTime.count()};
       PreviousTime = CurrentTime;
 
       // Accumulate time to handle fixed-step updates
       Lag += DeltaTime;
 
       // Process input
-      EventManager::GetInstance().PollEvents();
+      EventManager &EventManager{EventManager::GetInstance()};
+      EventManager.PollEvents();
 
       // Fixed update loop
       uint16_t UpdateCount{0};
@@ -95,6 +94,9 @@ namespace Engine
       {
         EngineData->Draw(Renderer);
       }
+
+      // Remove
+      EventManager.SafelyRemovePendingEvents();
 
       // Update the screen
       SDL_RenderClear(Renderer);

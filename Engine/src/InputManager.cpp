@@ -6,6 +6,8 @@ namespace Engine
 {
   std::unique_ptr<InputManager> InputManager::Instance{nullptr};
 
+  InputData::InputData(SDL_Scancode Scancode) : Scancode(Scancode) {}
+
   InputManager::InputManager()
   {
     // Subscribe to SDL events
@@ -32,25 +34,12 @@ namespace Engine
     EventManager.RemoveEventListener(SDL_MOUSEBUTTONUP, MouseReleasedEventId);
   }
 
-  InputData::InputData(SDL_Scancode Scancode) : Scancode(Scancode) {}
-
-  void InputManager::CreateInstance()
-  {
-    if (Instance != nullptr)
-    {
-      throw std::logic_error("Instance of InputManager has already been created!");
-    }
-
-    Instance.reset(new InputManager()); // Use reset to create the instance
-  }
-
   InputManager &InputManager::GetInstance()
   {
-    if (Instance == nullptr)
+    if (!Instance)
     {
-      throw std::logic_error("Instance of InputManager has not been created yet!");
+      Instance.reset(new InputManager());
     }
-
     return *Instance;
   }
 
