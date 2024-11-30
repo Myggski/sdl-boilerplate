@@ -70,6 +70,11 @@
     "xstring": "cpp",
     "xtr1common": "cpp",
     "xutility": "cpp",
-    "unordered_set": "cpp"
+    "unordered_set": "cpp",
+    "deque": "cpp",
+    "queue": "cpp",
+    "ranges": "cpp",
+    "span": "cpp",
+    "bitset": "cpp"
   },
 }

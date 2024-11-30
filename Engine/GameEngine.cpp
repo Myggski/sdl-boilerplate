@@ -74,7 +74,7 @@ namespace Engine
       Lag += DeltaTime;
 
       // Process input
-      EventManager &EventManager{EventManager::GetInstance()};
+      Engine::EventManager &EventManager{Engine::EventManager::GetInstance()};
       EventManager.PollEvents();
 
       if (!IsGameRunning)
