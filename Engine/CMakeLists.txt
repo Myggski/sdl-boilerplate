@@ -19,6 +19,14 @@ set(ENGINE_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/GameEngine.h
 )
 
+file(TO_CMAKE_PATH "$ENV{CMAKE_PREFIX_PATH}" CMAKE_SDK_PATH) # converts a native <path> into a cmake-style path with forward-slashes
+set(FMOD_DIR "${CMAKE_SDK_PATH}/FMOD")
+
+# Paths for FMOD
+set(FMOD_INCLUDE_DIR "${FMOD_DIR}/include")
+set(FMOD_LIB_DIR "${FMOD_DIR}/lib/${ARCH}")
+set(FMOD_LIB "${FMOD_LIB_DIR}/fmod_vc.lib") # Windows dynamic library for FMOD
+
 # Create the shared library
 add_library(${PROJECT_NAME} SHARED ${ENGINE_SOURCE} ${ENGINE_HEADERS})
 
@@ -39,6 +47,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${SDL2_INCLUDE_DIRS}
     ${SDL2_IMAGE_INCLUDE_DIRS}
     ${SDL2_TTF_INCLUDE_DIRS}
+    ${FMOD_INCLUDE_DIR}
 )
 
 # Link libraries
@@ -46,6 +55,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     ${SDL2_LIBRARIES}
     ${SDL2_IMAGE_LIBRARIES}
     ${SDL2_TTF_LIBRARIES}
+    ${FMOD_LIB}
 )
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC PrecompiledHeader.h)
@@ -56,6 +66,12 @@ file(COPY
     DESTINATION ${BUILD_DIR}
 )
 
+# Copy required DLL files #TEMPORARY
+file(COPY
+    ${FMOD_LIB_DIR}/fmod.dll
+    DESTINATION ${BUILD_DIR}
+)
+
 # Print architecture information
 message(STATUS "Target Include Directory: ${CMAKE_SOURCE_DIR}/Engine/src")
 message(STATUS "Selected architecture: ${ARCH}")
@@ -63,3 +79,6 @@ message(STATUS "Build directory: ${BUILD_DIR}")
 message(STATUS "Install directory: ${INSTALL_DIR}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Compiler type: ${CMAKE_CXX_COMPILER}")
+message(STATUS "FMOD Include Directory: ${FMOD_INCLUDE_DIR}")
+message(STATUS "FMOD Library Directory: ${FMOD_LIB_DIR}")
+message(STATUS "FMOD Library: ${FMOD_LIB}")
