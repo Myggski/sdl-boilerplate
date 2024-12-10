@@ -7,74 +7,64 @@ namespace Engine
 {
   EntityManager::EntityManager()
   {
-    // Initialize EntityAlive and ComponentMasks
-    EntityAlive.reserve(MAX_ENTITIES);
-    ComponentMasks.reserve(MAX_ENTITIES); // Resize to MAX_ENTITIES and initialize each component mask to zero
+    // Reserve memory for performance
+    EntityGeneration.reserve(MAX_ENTITIES);
+    ComponentMasks.resize(MAX_ENTITIES, 0); // Directly resize and initialize to 0
+    Components.reserve(MAX_COMPONENTS);
 
-    // Fill AvailableEntities with all possible entity IDs for reuse
-    for (EntityId i = 0; i < MAX_ENTITIES; ++i)
+    // Initialize component storage for each potential component type
+    for (int32_t ComponentId = 0; ComponentId < MAX_COMPONENTS; ++ComponentId)
     {
-      EntityAlive.push_back(false);
-      AvailableEntities.push(i); // Push each entity ID into the available queue
-      ComponentMasks.push_back(0);
+      Components.push_back(ComponentStorage{MAX_ENTITIES});
+    }
+
+    // Fill FreeIndices with all possible entity IDs for reuse
+    for (size_t EntityIndex = 0; EntityIndex < MAX_ENTITIES; ++EntityIndex)
+    {
+      EntityGeneration.push_back(0);      // All generations start at 0
+      FreeIndices.push_back(EntityIndex); // Populate FreeIndices with all indices
     }
   }
 
   // Entity Management
-  EntityId EntityManager::CreateEntity()
+  Engine::Entity EntityManager::CreateEntity()
   {
-    if (AvailableEntities.empty())
+    if (FreeIndices.empty())
     {
-      throw std::runtime_error("No more entities available!");
+      throw std::runtime_error("No more entities can be created! Maximum entity limit reached.");
     }
-    EntityId Entity = AvailableEntities.front();
-    AvailableEntities.pop();
-    EntityAlive[Entity] = true;
-    return Entity;
+
+    // Retrieve the next available entity index
+    uint32_t EntityIndex = FreeIndices.front();
+    FreeIndices.pop_front();
+
+    // Return a new entity with the current generation
+    return MakeEntity(EntityIndex, EntityGeneration[EntityIndex]);
   }
 
-  void EntityManager::DestroyEntity(EntityId Entity)
+  void EntityManager::DestroyEntity(Engine::Entity Entity)
   {
-    if (!IsEntityAlive(Entity))
+    const uint32_t EntityIndex = Entity.Index();
+
+    // Ensure the index is valid
+    if (EntityIndex >= MAX_ENTITIES)
     {
-      return;
+      throw std::invalid_argument("Invalid entity index in DestroyEntity!");
     }
-    EntityAlive[Entity] = false;
-    ComponentMasks[Entity].reset(); // Clear all components for the entity
-    AvailableEntities.push(Entity); // Recycle the entity ID
+
+    // Increment generation to invalidate existing references, wrapping around with modulo
+    EntityGeneration[EntityIndex] = (EntityGeneration[EntityIndex] + 1) % (std::numeric_limits<uint8_t>::max() + 1);
+
+    // Recycle the index
+    FreeIndices.push_back(EntityIndex);
   }
 
-  bool EntityManager::IsEntityAlive(EntityId Entity) const
+  bool EntityManager::IsEntityAlive(Engine::Entity Entity) const
   {
-    return Entity >= 0 && Entity < MAX_ENTITIES && EntityAlive[Entity];
+    return EntityGeneration[Entity.Index()] == Entity.Generation();
   }
 
-  // Component Management
-  void EntityManager::AddComponent(EntityId Entity, int ComponentId, void *Data, size_t Size)
-  {
-    if (!IsEntityAlive(Entity))
-    {
-      throw std::runtime_error("Cannot add component to inactive entity!");
-    }
-
-    if (ComponentId < 0 || ComponentId >= MAX_COMPONENTS)
-    {
-      throw std::invalid_argument("Invalid ComponentId.");
-    }
-
-    // Ensure the component data array is initialized
-    if (Components[ComponentId].Data == nullptr)
-    {
-      Components[ComponentId].Data = std::malloc(MAX_ENTITIES * Size); // Allocate memory for MAX_ENTITIES components
-      Components[ComponentId].Size = Size;
-      std::memset(Components[ComponentId].Data, 0, MAX_ENTITIES * Size); // Initialize with zeroes
-    }
-
-    ComponentMasks[Entity].set(ComponentId);                                                    // Set the bit for this component
-    std::memcpy(static_cast<char *>(Components[ComponentId].Data) + Entity * Size, Data, Size); // Copy the data into the correct location
-  }
-
-  void EntityManager::RemoveComponent(EntityId Entity, int ComponentId)
+  void EntityManager::RemoveComponent(Engine::Entity Entity, int ComponentId)
   {
     if (!IsEntityAlive(Entity))
       return;
@@ -82,17 +72,11 @@ namespace Engine
     if (ComponentId < 0 || ComponentId >= MAX_COMPONENTS)
       return;
 
-    ComponentMasks[Entity].reset(ComponentId); // Remove the component by resetting the bit
-  }
+    // Remove the component from storage
+    Components[ComponentId].RemoveComponent(Entity);
 
-  void *EntityManager::GetComponent(EntityId Entity, int ComponentId)
-  {
-    if (!IsEntityAlive(Entity) || !ComponentMasks[Entity].test(ComponentId))
-    {
-      return nullptr; // Return nullptr if the entity doesn't have the requested component
-    }
-
-    return static_cast<char *>(Components[ComponentId].Data) + Entity * Components[ComponentId].Size; // Return the component data
+    // Update the component mask
+    ComponentMasks[Entity.Index()].reset(ComponentId);
   }
 
   // System Management
@@ -107,5 +91,12 @@ namespace Engine
     {
       System(DeltaTime); // Run all registered systems
     }
+  }
+
+  Engine::Entity EntityManager::MakeEntity(uint32_t EntityIndex, uint8_t Generation)
+  {
+    Engine::Entity Entity;
+    Entity.Id = (Generation << ENTITY_INDEX_BITS) | EntityIndex;
+    return Entity;
   }
 }

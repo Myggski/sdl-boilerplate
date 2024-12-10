@@ -75,6 +75,7 @@
     "queue": "cpp",
     "ranges": "cpp",
     "span": "cpp",
-    "bitset": "cpp"
+    "bitset": "cpp",
+    "any": "cpp"
   },
 }

@@ -6,15 +6,15 @@
 #include <queue>
 #include <functional>
 #include <cstring>
+#include "Entity.h"
+#include "ComponentStorage.h"
 
 namespace Engine
 {
   // Constants
-  constexpr size_t MAX_ENTITIES = 5120;
   constexpr size_t MAX_COMPONENTS = 32;
 
   // Type Definitions
-  using EntityId = int32_t;
   using ComponentMask = std::bitset<MAX_COMPONENTS>;
   using SystemFunc = std::function<void(float)>;
 
@@ -25,35 +25,58 @@ namespace Engine
     EntityManager();
 
     // Entity Management
-    EntityId CreateEntity();
-    void DestroyEntity(EntityId Entity);
-    bool IsEntityAlive(EntityId Entity) const;
+    Engine::Entity CreateEntity();
+    void DestroyEntity(Engine::Entity Entity);
+    bool IsEntityAlive(Engine::Entity Entity) const;
 
     // Component Management
-    void AddComponent(EntityId Entity, int ComponentId, void *Data, size_t Size);
-    void RemoveComponent(EntityId Entity, int ComponentId);
-    void *GetComponent(EntityId Entity, int ComponentId);
+    void RemoveComponent(Engine::Entity Entity, int ComponentId);
+
+    template <typename T>
+    void AddComponent(Engine::Entity Entity, int ComponentId, const T &Component)
+    {
+      if (!IsEntityAlive(Entity))
+      {
+        throw std::runtime_error("Cannot add component to inactive entity!");
+      }
+
+      if (ComponentId < 0 || ComponentId >= MAX_COMPONENTS)
+      {
+        throw std::invalid_argument("Invalid ComponentId.");
+      }
+
+      // Add the component to the storage
+      Components[ComponentId].AddComponent<T>(Entity, std::forward<const T>(Component));
+
+      // Update the component mask
+      ComponentMasks[Entity.Index()].set(ComponentId);
+    }
+
+    template <typename T>
+    T *GetComponent(Engine::Entity Entity, int32_t ComponentId)
+    {
+      if (!IsEntityAlive(Entity) || !ComponentMasks[Entity.Index()].test(ComponentId))
+      {
+        return nullptr;
+      }
+
+      // Retrieve the component from storage
+      return Components[ComponentId].GetComponent<T>(Entity);
+    }
 
     // System Management
     void RegisterSystem(SystemFunc System);
     void RunSystems(float DeltaTime);
 
   private:
+    Engine::Entity MakeEntity(uint32_t EntityIndex, uint8_t Generation);
+
+  private:
     // Internal Data
-    std::vector<bool> EntityAlive;             // Tracks active entities
+    std::vector<uint8_t> EntityGeneration;     // Tracks the generation for each entity slot
+    std::deque<uint32_t> FreeIndices;          // Queue of recycled indices
     std::vector<ComponentMask> ComponentMasks; // Component masks
-    std::queue<EntityId> AvailableEntities;    // Recycled entity IDs
     std::vector<SystemFunc> Systems;           // Registered systems
-
-    // Component Storage
-    struct ComponentData
-    {
-    public:
-      void *Data;  // Pointer to array of component data
-      size_t Size; // Size of each component
-    };
-
-    ComponentData Components[MAX_COMPONENTS] = {}; // Component storage array
+    std::vector<ComponentStorage> Components;  // Component storage array
   };
-
 }

@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Engine.h"
 #include <SDL.h>
 #include "imgui.h"
 #include <memory>
@@ -12,7 +13,7 @@ namespace Game
   constexpr int COMPONENT_VELOCITY = 1;
 
   static Engine::EntityManager EntityManager;
-  static Engine::EntityId Player = -1;
+  static Engine::Entity Player;
 
   // Position Component
   struct Position
@@ -26,25 +27,25 @@ namespace Game
     float vx, vy;
   };
 
-  inline void MovementSystem(Engine::EntityManager *Manager, float DeltaTime)
+  inline void MovementSystem(Engine::EntityManager &Manager, float DeltaTime)
   {
-    for (Engine::EntityId e = 0; e < 5120; ++e)
+    for (size_t EntityIndex = 0; EntityIndex < Engine::MAX_ENTITIES; ++EntityIndex)
     {
-      if (!Manager->IsEntityAlive(e))
+      Engine::Entity Entity;
+      Entity.Id = EntityIndex;
+      if (Manager.IsEntityAlive(Entity))
       {
-        continue;
+        // Check if the entity has both Position and Velocity components
+        if (Position *EntityPosition = Manager.GetComponent<Position>(Entity, COMPONENT_POSITION))
+        {
+          if (Velocity *EntityVelocity = Manager.GetComponent<Velocity>(Entity, COMPONENT_VELOCITY))
+          {
+            // Update position based on velocity
+            EntityPosition->x += EntityVelocity->vx * DeltaTime;
+            EntityPosition->y += EntityVelocity->vy * DeltaTime;
+          }
+        }
       }
-
-      Position *pos = static_cast<Position *>(Manager->GetComponent(e, COMPONENT_POSITION));
-      Velocity *vel = static_cast<Velocity *>(Manager->GetComponent(e, COMPONENT_VELOCITY));
-
-      if (pos && vel)
-      {
-        pos->x += vel->vx * DeltaTime;
-        pos->y += vel->vy * DeltaTime;
-      }
-
-      std::cout << "X: " << pos->x << " Y: " << pos->y << std::endl;
     }
   }
 
@@ -59,8 +60,8 @@ namespace Game
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
-    ImGuiEventHandle = Engine::EventManager::GetInstance().GetSDLEvent().Add([](const SDL_Event &Event)
-                                                                             { ImGui_ImplSDL2_ProcessEvent(&Event); });
+    SDLEventForImGuiHandle = Engine::EventManager::GetInstance().GetSDLEvent().Add([](const SDL_Event &Event)
+                                                                                   { ImGui_ImplSDL2_ProcessEvent(&Event); });
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     // ImGui::StyleColorsLight();
@@ -69,11 +70,9 @@ namespace Game
     ImGui_ImplSDL2_InitForSDLRenderer(Window, Renderer);
     ImGui_ImplSDLRenderer2_Init(Renderer);
 
-    EntityManager = Engine::EntityManager();
-
     // Register systems
     EntityManager.RegisterSystem([](float DeltaTime)
-                                 { MovementSystem(&Game::EntityManager, DeltaTime); });
+                                 { MovementSystem(Game::EntityManager, DeltaTime); });
 
     // Create an entity
     Player = EntityManager.CreateEntity();
@@ -81,8 +80,8 @@ namespace Game
     // Add components
     Position PlayerPosition = {0.0f, 0.0f};
     Velocity PlayerVelocity = {1.0f, 1.0f};
-    EntityManager.AddComponent(Player, COMPONENT_POSITION, &PlayerPosition, sizeof(Position));
-    EntityManager.AddComponent(Player, COMPONENT_VELOCITY, &PlayerVelocity, sizeof(Velocity));
+    EntityManager.AddComponent<Position>(Player, COMPONENT_POSITION, PlayerPosition);
+    EntityManager.AddComponent<Velocity>(Player, COMPONENT_VELOCITY, PlayerVelocity);
 
     // Perform initialization logic here
     return true; // Example return value
@@ -92,7 +91,6 @@ namespace Game
   void Update(float DeltaTime)
   {
     EntityManager.RunSystems(DeltaTime);
-    std::cout << "is D pressed: " << Engine::InputManager::GetInstance().IsKeyPressed(SDL_SCANCODE_D) << " hold: " << Engine::InputManager::GetInstance().IsKeyHeld(SDL_SCANCODE_D) << "\n";
   }
 
   void Draw(SDL_Renderer *Renderer)
@@ -117,7 +115,10 @@ namespace Game
   void Shutdown()
   {
     // Perform shutdown logic here
-    Engine::EventManager::GetInstance().GetSDLEvent().Remove(ImGuiEventHandle);
+    if (SDLEventForImGuiHandle > 0)
+    {
+      Engine::EventManager::GetInstance().GetSDLEvent().Remove(SDLEventForImGuiHandle);
+    }
 
     ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
