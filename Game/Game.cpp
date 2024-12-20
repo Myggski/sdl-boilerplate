@@ -50,8 +50,10 @@ namespace Game
   }
 
   // Definition of static member variable
-  bool Initialize(SDL_Window *Window, SDL_Renderer *Renderer)
+  bool Initialize(SDL_Window *Window, SDL_Renderer *Renderer, Engine::SDLEventDispatcher &SDLEventDispatcher)
   {
+    EngineSDLEventDispatcher = std::make_shared<Engine::SDLEventDispatcher>(SDLEventDispatcher);
+
     // Perform drawing
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -60,8 +62,13 @@ namespace Game
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
-    SDLEventForImGuiHandle = Engine::EventManager::GetInstance().GetSDLEvent().Add([](const SDL_Event &Event)
-                                                                                   { ImGui_ImplSDL2_ProcessEvent(&Event); });
+    Engine::SDLEventDispatcher *Dispatcher = EngineSDLEventDispatcher.get();
+    if (Dispatcher)
+    {
+      SDLEventForImGuiHandle = Dispatcher->GetSDLEvent().Add([](const SDL_Event &Event)
+                                                             { ImGui_ImplSDL2_ProcessEvent(&Event); });
+    }
+
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     // ImGui::StyleColorsLight();
@@ -117,7 +124,11 @@ namespace Game
     // Perform shutdown logic here
     if (SDLEventForImGuiHandle > 0)
     {
-      Engine::EventManager::GetInstance().GetSDLEvent().Remove(SDLEventForImGuiHandle);
+      Engine::SDLEventDispatcher *Dispatcher = EngineSDLEventDispatcher.get();
+      if (Dispatcher)
+      {
+        Dispatcher->GetSDLEvent().Remove(SDLEventForImGuiHandle);
+      }
     }
 
     ImGui_ImplSDLRenderer2_Shutdown();

@@ -6,6 +6,7 @@
 #include <SDL_events.h>
 #include <SDL_scancode.h>
 #include "GameEvent.h"
+#include "SDL/SDLEventHandler.h"
 
 namespace Engine
 {
@@ -24,11 +25,11 @@ namespace Engine
   class ENGINE_API InputManager
   {
   public:
-    ~InputManager();
-
     static InputManager &GetInstance(); // Returns the singleton instance
 
-    GameEvent<SDL_Event> &GetSDLEvent();
+    void Initialize(SDLEventDispatcher &Dispatcher);
+    void Clear();
+
     bool IsKeyPressed(const SDL_Scancode Scancode) const;
     bool IsKeyReleased(const SDL_Scancode Scancode) const;
     bool IsKeyHeld(const SDL_Scancode Scancode) const;
@@ -47,8 +48,9 @@ namespace Engine
     void OnMouseButtonUp(SDL_Event Event);
 
   private:
-
     static std::unique_ptr<InputManager> Instance; // Singleton instance
+
+    std::vector<SDLEventHandler> EventHandlers;
 
     std::unordered_map<SDL_Scancode, InputData> Keys;
     std::unordered_map<Uint8, bool> MouseButtons;         // Current button states

@@ -4,6 +4,7 @@
 #include "GameEngine.h"
 #include "EntryPoint.h"
 #include "src/GameEvent.h"
-#include "src/EventManager.h"
+#include "src/SDL/SDLEventDispatcher.h"
+#include "src/SDL/SDLEventHandler.h"
 #include "src/InputManager.h"
 #include "src/ECS/EntityManager.h"

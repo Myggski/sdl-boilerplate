@@ -1,6 +1,6 @@
 
 #include "InputManager.h"
-#include "EventManager.h"
+#include "SDL/SDLEventDispatcher.h"
 
 namespace Engine
 {
@@ -11,27 +11,7 @@ namespace Engine
   InputManager::InputManager()
   {
     // Subscribe to SDL events
-    Engine::EventManager &EventManager{EventManager::EventManager::GetInstance()};
-    KeyPressedEventId = EventManager.RegisterEventListener(SDL_KEYDOWN, [](const SDL_Event &Event)
-                                                           { GetInstance().OnKeyPressed(Event); });
-    KeyReleaseEventId = EventManager.RegisterEventListener(SDL_KEYUP, [](const SDL_Event &Event)
-                                                           { GetInstance().OnKeyReleased(Event); });
-    MouseMotionEventId = EventManager.RegisterEventListener(SDL_MOUSEMOTION, [](const SDL_Event &Event)
-                                                            { GetInstance().OnMouseMotion(Event); });
-    MousePressedEventId = EventManager.RegisterEventListener(SDL_MOUSEBUTTONDOWN, [](const SDL_Event &Event)
-                                                             { GetInstance().OnMouseButtonDown(Event); });
-    MouseReleasedEventId = EventManager.RegisterEventListener(SDL_MOUSEBUTTONUP, [](const SDL_Event &Event)
-                                                              { GetInstance().OnMouseButtonUp(Event); });
-  }
-
-  InputManager::~InputManager()
-  {
-    Engine::EventManager &EventManager{EventManager::EventManager::GetInstance()};
-    EventManager.RemoveEventListener(SDL_KEYDOWN, KeyPressedEventId);
-    EventManager.RemoveEventListener(SDL_KEYUP, KeyReleaseEventId);
-    EventManager.RemoveEventListener(SDL_MOUSEMOTION, MouseMotionEventId);
-    EventManager.RemoveEventListener(SDL_MOUSEBUTTONDOWN, MousePressedEventId);
-    EventManager.RemoveEventListener(SDL_MOUSEBUTTONUP, MouseReleasedEventId);
+    EventHandlers.reserve(5);
   }
 
   InputManager &InputManager::GetInstance()
@@ -43,9 +23,23 @@ namespace Engine
     return *Instance;
   }
 
-  GameEvent<SDL_Event> &InputManager::GetSDLEvent()
+  void InputManager::Initialize(SDLEventDispatcher &Dispatcher)
   {
-    return OnSDLEvent;
+    EventHandlers.emplace_back(Dispatcher, SDL_KEYDOWN, [](const SDL_Event &Event)
+                               { GetInstance().OnKeyPressed(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_KEYUP, [](const SDL_Event &Event)
+                               { GetInstance().OnKeyReleased(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEMOTION, [](const SDL_Event &Event)
+                               { GetInstance().OnMouseMotion(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEBUTTONDOWN, [](const SDL_Event &Event)
+                               { GetInstance().OnMouseButtonDown(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEBUTTONUP, [](const SDL_Event &Event)
+                               { GetInstance().OnMouseButtonUp(Event); });
+  }
+
+  void InputManager::Clear()
+  {
+    EventHandlers.clear();
   }
 
   void InputManager::OnKeyPressed(SDL_Event Event)
@@ -69,9 +63,6 @@ namespace Engine
   {
     MouseX = Event.motion.x;
     MouseY = Event.motion.y;
-
-    // Store or process the mouse position
-    // For example, you might store it in a member variable
   }
 
   /// @brief

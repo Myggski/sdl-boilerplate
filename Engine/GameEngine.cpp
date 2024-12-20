@@ -4,7 +4,8 @@
 #include <SDL.h>
 #include <stdexcept>
 #include <chrono>
-#include "src/EventManager.h"
+#include "src/SDL/SDLEventDispatcher.h"
+#include "src/SDL/SDLEventHandler.h"
 #include "src/InputManager.h"
 
 namespace Engine
@@ -41,14 +42,17 @@ namespace Engine
       return false;
     }
 
-    IsGameRunning = true;
+    SDLQuitEventId = Dispatcher.RegisterEventListener(SDL_QUIT, [&](const SDL_Event &Event)
+                                                      { Shutdown(); });
 
-    SDLQuitEventId = Engine::EventManager::GetInstance().RegisterEventListener(SDL_QUIT, [&](const SDL_Event &Event)
-                                                                               { Shutdown(); });
+    Engine::InputManager &InputManager = Engine::InputManager::GetInstance();
+    InputManager.Initialize(Dispatcher);
+
+    IsGameRunning = true;
 
     if (EngineData != nullptr)
     {
-      EngineData->Initialize(Window, Renderer);
+      EngineData->Initialize(Window, Renderer, Dispatcher);
     }
 
     return true;
@@ -74,8 +78,8 @@ namespace Engine
       Lag += DeltaTime;
 
       // Process input
-      Engine::EventManager &EventManager{Engine::EventManager::GetInstance()};
-      EventManager.PollEvents();
+
+      Dispatcher.PollEvents();
 
       if (!IsGameRunning)
       {
@@ -100,18 +104,12 @@ namespace Engine
         EngineData->Draw(Renderer);
       }
 
-      // Remove
-      EventManager.SafelyRemovePendingEvents();
-
       // Update the screen
       SDL_RenderClear(Renderer);
       SDL_GL_SwapWindow(Window);
     }
 
-    // Destroy window and quit SDL
-    SDL_DestroyWindow(Window);
-    SDL_DestroyRenderer(Renderer);
-    SDL_Quit();
+    Cleanup();
   }
 
   void GameEngine::Shutdown()
@@ -122,7 +120,15 @@ namespace Engine
     {
       EngineData->Shutdown();
     }
+  }
 
-    Engine::EventManager::GetInstance().RemoveEventListener(SDL_QUIT, SDLQuitEventId);
+  void GameEngine::Cleanup()
+  {
+    Dispatcher.RemoveEventListener(SDL_QUIT, SDLQuitEventId);
+    InputManager::GetInstance().Clear();
+
+    SDL_DestroyWindow(Window);
+    SDL_DestroyRenderer(Renderer);
+    SDL_Quit();
   }
 }
