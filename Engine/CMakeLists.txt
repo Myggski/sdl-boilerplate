@@ -62,15 +62,16 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 target_precompile_headers(${PROJECT_NAME} PUBLIC PrecompiledHeader.h)
 
 # Copy required DLL files #TEMPORARY
-file(COPY
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${SDL2_INCLUDE_DIRS}/../lib/${ARCH}/SDL2.dll
-    DESTINATION ${BUILD_DIR}
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
-# Copy required DLL files #TEMPORARY
-file(COPY
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${FMOD_LIB_DIR}/fmod.dll
-    DESTINATION ${BUILD_DIR}
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 # Print architecture information

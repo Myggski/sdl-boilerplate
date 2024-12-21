@@ -37,7 +37,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Engine
     ${IMGUI_DIR}
-    "${IMGUI_DIR}\\backends" # Include the backends directory
+    "${IMGUI_DIR}/backends" # Use forward slashes for path consistency
 )
 
 # Link against Engine library (sdl-boilerplate-engine.dll)
