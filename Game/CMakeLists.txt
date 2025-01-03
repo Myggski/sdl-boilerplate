@@ -21,6 +21,9 @@ set(SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/Engine/EntryPoint.h # Include EntryPoint.h if it contains main()
 )
 
+# Copy the entire assets folder and its contents (subdirectories and files)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+
 # Create executable
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
@@ -56,5 +59,3 @@ set_target_properties(${PROJECT_NAME}
 
 # Set the startup project for Visual Studio (if needed)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
-
-file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${BUILD_DIR})

@@ -78,4 +78,5 @@
     "bitset": "cpp",
     "any": "cpp"
   },
+  "C_Cpp.errorSquiggles": "disabled",
 }

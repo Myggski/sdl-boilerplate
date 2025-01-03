@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-  std::unique_ptr<InputManager> InputManager::Instance{nullptr};
+  std::unique_ptr<InputManager> InputManager::Instance = nullptr;
 
   InputData::InputData(SDL_Scancode Scancode) : Scancode(Scancode) {}
 

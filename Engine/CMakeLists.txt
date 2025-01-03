@@ -61,18 +61,22 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC PrecompiledHeader.h)
 
-# Copy required DLL files #TEMPORARY
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+# List of DLLs to copy
+set(DLLS_TO_COPY
     ${SDL2_INCLUDE_DIRS}/../lib/${ARCH}/SDL2.dll
-    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    ${SDL2_IMAGE_INCLUDE_DIRS}/../lib/${ARCH}/SDL2_image.dll
+    ${SDL2_TTF_INCLUDE_DIRS}/../lib/${ARCH}/SDL2_ttf.dll
+    ${FMOD_LIB_DIR}/fmod.dll
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${FMOD_LIB_DIR}/fmod.dll
-    $<TARGET_FILE_DIR:${PROJECT_NAME}>
-)
+# Copy each DLL using a loop
+foreach(DLL ${DLLS_TO_COPY})
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${DLL}
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+endforeach()
 
 # Print architecture information
 message(STATUS "Target Include Directory: ${CMAKE_SOURCE_DIR}/Engine/src")

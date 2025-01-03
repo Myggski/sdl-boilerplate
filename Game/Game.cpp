@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "Engine.h"
 #include <SDL.h>
+#include <SDL_image.h>
 #include "imgui.h"
 #include <memory>
 #include "backends/imgui_impl_sdl2.h"
@@ -50,9 +51,10 @@ namespace Game
   }
 
   // Definition of static member variable
-  bool Initialize(SDL_Window *Window, SDL_Renderer *Renderer, Engine::SDLEventDispatcher &SDLEventDispatcher)
+  bool Initialize(SDL_Window *Window, SDL_Renderer *Renderer, Engine::SDLEventDispatcher *SDLEventDispatcher)
   {
-    EngineSDLEventDispatcher = std::make_shared<Engine::SDLEventDispatcher>(SDLEventDispatcher);
+    // Store a raw pointer to the existing dispatcher
+    EngineSDLEventDispatcher = SDLEventDispatcher;
 
     // Perform drawing
     IMGUI_CHECKVERSION();
@@ -62,11 +64,11 @@ namespace Game
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
-    Engine::SDLEventDispatcher *Dispatcher = EngineSDLEventDispatcher.get();
-    if (Dispatcher)
+    // Use weak_ptr to avoid shared ownership
+    if (EngineSDLEventDispatcher != nullptr) // Lock weak_ptr to get shared_ptr
     {
-      SDLEventForImGuiHandle = Dispatcher->GetSDLEvent().Add([](const SDL_Event &Event)
-                                                             { ImGui_ImplSDL2_ProcessEvent(&Event); });
+      SDLEventForImGuiHandle = EngineSDLEventDispatcher->GetSDLEvent().Add([](const SDL_Event &Event)
+                                                                           { ImGui_ImplSDL2_ProcessEvent(&Event); });
     }
 
     // Setup Dear ImGui style
@@ -90,6 +92,14 @@ namespace Game
     EntityManager.AddComponent<Position>(Player, COMPONENT_POSITION, PlayerPosition);
     EntityManager.AddComponent<Velocity>(Player, COMPONENT_VELOCITY, PlayerVelocity);
 
+    // Load an image
+    ImageTexture = Engine::AssetManager::GetInstance().LoadTexture("assets/images/bomb.png");
+    if (!ImageTexture)
+    {
+      SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to load image: %s\n", IMG_GetError());
+      return false;
+    }
+
     // Perform initialization logic here
     return true; // Example return value
   }
@@ -112,23 +122,26 @@ namespace Game
 
     // Rendering
     ImGui::Render();
-    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255); // Clear color
-    SDL_RenderClear(Renderer);
+
+    // Define the source rectangle (top-left 16x16 of the image)
+    SDL_Rect srcRect = {0, 0, 16, 16}; // x=0, y=0, width=16, height=16
+
+    // Define the destination rectangle
+    SDL_Rect dstRect = {100, 100, 16, 16}; // x=100, y=100, width=16, height=16
+
+    // Render the image (only the 16x16 part)
+    SDL_RenderCopy(Renderer, ImageTexture, &srcRect, &dstRect);
+
+    Engine::Camera::GetMainCamera().ResetScale();
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), Renderer);
-    SDL_RenderPresent(Renderer);
+    Engine::Camera::GetMainCamera().SetZoomScale();
   }
 
-  // Definition of static shutdown function
   void Shutdown()
   {
-    // Perform shutdown logic here
-    if (SDLEventForImGuiHandle > 0)
+    if (SDLEventForImGuiHandle > 0 && EngineSDLEventDispatcher != nullptr)
     {
-      Engine::SDLEventDispatcher *Dispatcher = EngineSDLEventDispatcher.get();
-      if (Dispatcher)
-      {
-        Dispatcher->GetSDLEvent().Remove(SDLEventForImGuiHandle);
-      }
+      EngineSDLEventDispatcher->GetSDLEvent().Remove(SDLEventForImGuiHandle);
     }
 
     ImGui_ImplSDLRenderer2_Shutdown();

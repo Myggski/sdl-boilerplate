@@ -6,7 +6,10 @@
 #include <chrono>
 #include "src/SDL/SDLEventDispatcher.h"
 #include "src/SDL/SDLEventHandler.h"
+#include "src/AssetManager.h"
 #include "src/InputManager.h"
+#include <SDL_image.h>
+#include "src/Camera.h"
 
 namespace Engine
 {
@@ -28,12 +31,14 @@ namespace Engine
       return false;
     }
 
-    Window = SDL_CreateWindow("SDL2 Boilerplate", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1200, 800, SDL_WINDOW_SHOWN);
+    Window = SDL_CreateWindow("SDL2 Boilerplate", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1920, 1080, SDL_WINDOW_SHOWN);
     if (!Window)
     {
       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
       return false;
     }
+
+    SDL_RaiseWindow(Window);
 
     Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (Renderer == nullptr)
@@ -45,14 +50,16 @@ namespace Engine
     SDLQuitEventId = Dispatcher.RegisterEventListener(SDL_QUIT, [&](const SDL_Event &Event)
                                                       { Shutdown(); });
 
-    Engine::InputManager &InputManager = Engine::InputManager::GetInstance();
-    InputManager.Initialize(Dispatcher);
+    // Initialize managers
+    Engine::AssetManager::GetInstance().Initialize(Renderer);
+    Engine::InputManager::GetInstance().Initialize(Dispatcher);
+    Engine::Camera::Initialize(Window, Renderer, 320, 180, 6.f); // Initialize camera with default values
 
     IsGameRunning = true;
 
     if (EngineData != nullptr)
     {
-      EngineData->Initialize(Window, Renderer, Dispatcher);
+      EngineData->Initialize(Window, Renderer, &Dispatcher);
     }
 
     return true;
@@ -60,9 +67,11 @@ namespace Engine
 
   void GameEngine::Update()
   {
-    constexpr float FixedTimeStep{1.0f / 60.0f}; // 60 FPS
-    constexpr uint8_t MaxFrameSkip{5};           // Limit to prevent spiraling
-    float Lag{0.0f};
+    constexpr float FixedTimeStep = 1.0f / 60.0f;
+    constexpr uint8_t MaxFrameSkip = 5;
+    float Lag = 0.0f;
+
+    Engine::Camera &MainCamera = Engine::Camera::GetMainCamera();
 
     std::chrono::steady_clock::time_point PreviousTime{std::chrono::high_resolution_clock::now()};
 
@@ -87,7 +96,7 @@ namespace Engine
       }
 
       // Fixed update loop
-      uint16_t UpdateCount{0};
+      uint8_t UpdateCount{0};
       while (Lag >= FixedTimeStep && UpdateCount < MaxFrameSkip)
       {
         if (EngineData)
@@ -98,11 +107,15 @@ namespace Engine
         ++UpdateCount;
       }
 
+      MainCamera.PreRender();
+
       // Render only once per frame
       if (EngineData)
       {
         EngineData->Draw(Renderer);
       }
+
+      MainCamera.PostRender();
 
       // Update the screen
       SDL_RenderClear(Renderer);

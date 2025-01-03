@@ -15,7 +15,7 @@ namespace Engine
   {
   public:
     GameEngineData(
-        const std::function<bool(SDL_Window *, SDL_Renderer *, Engine::SDLEventDispatcher &)> &Initialize,
+        const std::function<bool(SDL_Window *, SDL_Renderer *, Engine::SDLEventDispatcher *)> &Initialize,
         std::function<void(float)> Update,
         std::function<void(SDL_Renderer *)> Draw,
         std::function<void()> Shutdown)
@@ -25,7 +25,7 @@ namespace Engine
           Shutdown(Shutdown) {}
 
   public:
-    const std::function<bool(SDL_Window *, SDL_Renderer *, Engine::SDLEventDispatcher &)> Initialize;
+    const std::function<bool(SDL_Window *, SDL_Renderer *, Engine::SDLEventDispatcher *)> Initialize;
     const std::function<void(float)> Update;
     const std::function<void(SDL_Renderer *)> Draw;
     const std::function<void()> Shutdown;
