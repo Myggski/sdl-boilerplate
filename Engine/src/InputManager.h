@@ -1,12 +1,10 @@
 #pragma once
 
 #include "Core.h"
-#include <unordered_map>
-#include <memory>
+#include "PrecompiledHeader.h"
+#include "sdl/SDLEventHandler.h"
 #include <SDL_events.h>
 #include <SDL_scancode.h>
-#include "GameEvent.h"
-#include "SDL/SDLEventHandler.h"
 
 namespace Engine
 {

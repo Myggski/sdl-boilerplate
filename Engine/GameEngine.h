@@ -2,7 +2,7 @@
 
 #include "Core.h"
 #include "PrecompiledHeader.h"
-#include "SDL/SDLEventDispatcher.h"
+#include "sdl/SDLEventDispatcher.h"
 
 struct SDL_Window;
 struct SDL_Renderer;

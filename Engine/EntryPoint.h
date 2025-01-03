@@ -2,7 +2,6 @@
 
 #include "Core.h"
 #include "GameEngine.h"
-#include <memory>
 
 int main()
 {

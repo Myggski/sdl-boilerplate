@@ -1,4 +1,4 @@
-#include "SDL/SDLEventDispatcher.h"
+#include "sdl/SDLEventDispatcher.h"
 #include <iostream>
 #include <vector>
 #include <utility>

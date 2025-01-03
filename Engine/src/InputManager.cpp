@@ -1,6 +1,6 @@
 
 #include "InputManager.h"
-#include "SDL/SDLEventDispatcher.h"
+#include "sdl/SDLEventDispatcher.h"
 
 namespace Engine
 {

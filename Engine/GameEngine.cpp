@@ -4,8 +4,8 @@
 #include <SDL.h>
 #include <stdexcept>
 #include <chrono>
-#include "src/SDL/SDLEventDispatcher.h"
-#include "src/SDL/SDLEventHandler.h"
+#include "src/sdl/SDLEventDispatcher.h"
+#include "src/sdl/SDLEventHandler.h"
 #include "src/AssetManager.h"
 #include "src/InputManager.h"
 #include <SDL_image.h>

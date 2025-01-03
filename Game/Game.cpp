@@ -22,12 +22,6 @@ namespace Game
     float x, y;
   };
 
-  // Velocity Component
-  struct Velocity
-  {
-    float vx, vy;
-  };
-
   inline void MovementSystem(Engine::EntityManager &Manager, float DeltaTime)
   {
     for (size_t EntityIndex = 0; EntityIndex < Engine::MAX_ENTITIES; ++EntityIndex)
@@ -39,11 +33,11 @@ namespace Game
         // Check if the entity has both Position and Velocity components
         if (Position *EntityPosition = Manager.GetComponent<Position>(Entity, COMPONENT_POSITION))
         {
-          if (Velocity *EntityVelocity = Manager.GetComponent<Velocity>(Entity, COMPONENT_VELOCITY))
+          if (Engine::VelocityComponent *EntityVelocity = Manager.GetComponent<Engine::VelocityComponent>(Entity, COMPONENT_VELOCITY))
           {
             // Update position based on velocity
-            EntityPosition->x += EntityVelocity->vx * DeltaTime;
-            EntityPosition->y += EntityVelocity->vy * DeltaTime;
+            EntityPosition->x += EntityVelocity->X * DeltaTime;
+            EntityPosition->y += EntityVelocity->Y * DeltaTime;
           }
         }
       }
@@ -87,10 +81,11 @@ namespace Game
     Player = EntityManager.CreateEntity();
 
     // Add components
-    Position PlayerPosition = {0.0f, 0.0f};
-    Velocity PlayerVelocity = {1.0f, 1.0f};
+    Position PlayerPosition{0.0f, 0.0f};
+    Engine::VelocityComponent PlayerVelocity{1.f, 1.f};
+
     EntityManager.AddComponent<Position>(Player, COMPONENT_POSITION, PlayerPosition);
-    EntityManager.AddComponent<Velocity>(Player, COMPONENT_VELOCITY, PlayerVelocity);
+    EntityManager.AddComponent<Engine::VelocityComponent>(Player, COMPONENT_VELOCITY, PlayerVelocity);
 
     // Load an image
     ImageTexture = Engine::AssetManager::GetInstance().LoadTexture("assets/images/bomb.png");
@@ -123,11 +118,8 @@ namespace Game
     // Rendering
     ImGui::Render();
 
-    // Define the source rectangle (top-left 16x16 of the image)
-    SDL_Rect srcRect = {0, 0, 16, 16}; // x=0, y=0, width=16, height=16
-
-    // Define the destination rectangle
-    SDL_Rect dstRect = {100, 100, 16, 16}; // x=100, y=100, width=16, height=16
+    SDL_Rect srcRect{0, 0, 16, 16};
+    SDL_Rect dstRect{100, 100, 16, 16};
 
     // Render the image (only the 16x16 part)
     SDL_RenderCopy(Renderer, ImageTexture, &srcRect, &dstRect);

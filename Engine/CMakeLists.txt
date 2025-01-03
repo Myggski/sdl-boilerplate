@@ -9,7 +9,10 @@ find_package(SDL2_image REQUIRED)
 # Set the sources for the Engine
 file(GLOB ENGINE_SOURCE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ecs/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ecs/component/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ecs/system/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sdl/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/SDL/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GameEngine.cpp
 )
