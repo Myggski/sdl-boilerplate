@@ -54,8 +54,6 @@ CMakePresets.json           x64-debug/x64-release/x64-debug-msvc
   (even `= default`) in the matching `.cpp`.
 - Adding a new `.cpp` file needs a reconfigure (`cmake --preset ...`), not just a rebuild, the
   `file(GLOB ...)` source list won't pick it up otherwise.
-- `Game.cpp`'s Text-button demo loads `C:/Windows/Fonts/arial.ttf` directly; swap it for a real
-  `.ttf` under `Game/assets/fonts/` once one is added.
 - `AnimationSystem`/`SpriteComponent` exist but aren't wired into anything yet; `Game.cpp` draws
   its sprite directly in `Draw` instead.
 - `x64-debug-msvc` only covers the CMake configure/build side, no VS Code launch config yet.
