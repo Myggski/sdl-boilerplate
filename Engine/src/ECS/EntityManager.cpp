@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
+#include <limits>
 
 namespace Engine
 {
@@ -9,14 +10,12 @@ namespace Engine
   {
     // Reserve memory for performance
     EntityGeneration.reserve(MAX_ENTITIES);
+    IsAlive.resize(MAX_ENTITIES, false);
     ComponentMasks.resize(MAX_ENTITIES, 0); // Directly resize and initialize to 0
-    Components.reserve(MAX_COMPONENTS);
 
-    // Initialize component storage for each potential component type
-    for (int32_t ComponentId = 0; ComponentId < MAX_COMPONENTS; ++ComponentId)
-    {
-      Components.push_back(ComponentStorage{MAX_ENTITIES});
-    }
+    // One slot per possible component id, populated lazily the first time that component type
+    // is actually used (see AddComponent), so unused component types cost nothing.
+    Components.resize(MAX_COMPONENTS);
 
     // Fill FreeIndices with all possible entity IDs for reuse
     for (size_t EntityIndex = 0; EntityIndex < MAX_ENTITIES; ++EntityIndex)
@@ -38,6 +37,8 @@ namespace Engine
     uint32_t EntityIndex = FreeIndices.front();
     FreeIndices.pop_front();
 
+    IsAlive[EntityIndex] = true;
+
     // Return a new entity with the current generation
     return MakeEntity(EntityIndex, EntityGeneration[EntityIndex]);
   }
@@ -55,6 +56,10 @@ namespace Engine
     // Increment generation to invalidate existing references, wrapping around with modulo
     EntityGeneration[EntityIndex] = (EntityGeneration[EntityIndex] + 1) % (std::numeric_limits<uint8_t>::max() + 1);
 
+    IsAlive[EntityIndex] = false;
+    ComponentMasks[EntityIndex].reset(); // Clear all component flags so a recycled index doesn't
+                                         // inherit the previous occupant's components
+
     // Recycle the index
     FreeIndices.push_back(EntityIndex);
   }
@@ -62,21 +67,6 @@ namespace Engine
   bool EntityManager::IsEntityAlive(Engine::Entity Entity) const
   {
     return EntityGeneration[Entity.Index()] == Entity.Generation();
-  }
-
-  void EntityManager::RemoveComponent(Engine::Entity Entity, int ComponentId)
-  {
-    if (!IsEntityAlive(Entity))
-      return;
-
-    if (ComponentId < 0 || ComponentId >= MAX_COMPONENTS)
-      return;
-
-    // Remove the component from storage
-    Components[ComponentId].RemoveComponent(Entity);
-
-    // Update the component mask
-    ComponentMasks[Entity.Index()].reset(ComponentId);
   }
 
   // System Management

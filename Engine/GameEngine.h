@@ -2,33 +2,28 @@
 
 #include "Core.h"
 #include "PrecompiledHeader.h"
-#include "sdl/SDLEventDispatcher.h"
-
-struct SDL_Window;
-struct SDL_Renderer;
+#include "EngineContext.h"
 
 namespace Engine
 {
-  class Application;
-
   struct ENGINE_API GameEngineData
   {
   public:
     GameEngineData(
-        const std::function<bool(SDL_Window *, SDL_Renderer *, Engine::SDLEventDispatcher *)> &Initialize,
-        std::function<void(float)> Update,
-        std::function<void(SDL_Renderer *)> Draw,
-        std::function<void()> Shutdown)
-        : Initialize(Initialize),
+        const std::function<bool(Engine::EngineContext &)> &Startup,
+        std::function<void(Engine::EngineContext &, float)> Update,
+        std::function<void(Engine::EngineContext &)> Draw,
+        std::function<void(Engine::EngineContext &)> Shutdown)
+        : Startup(Startup),
           Update(Update),
           Draw(Draw),
           Shutdown(Shutdown) {}
 
   public:
-    const std::function<bool(SDL_Window *, SDL_Renderer *, Engine::SDLEventDispatcher *)> Initialize;
-    const std::function<void(float)> Update;
-    const std::function<void(SDL_Renderer *)> Draw;
-    const std::function<void()> Shutdown;
+    const std::function<bool(Engine::EngineContext &)> Startup;
+    const std::function<void(Engine::EngineContext &, float)> Update;
+    const std::function<void(Engine::EngineContext &)> Draw;
+    const std::function<void(Engine::EngineContext &)> Shutdown;
   };
 
   class ENGINE_API GameEngine
@@ -47,7 +42,7 @@ namespace Engine
 
   private:
     std::unique_ptr<GameEngineData> EngineData{nullptr};
-    Engine::SDLEventDispatcher Dispatcher{};
+    std::unique_ptr<EngineContext> Context;
 
     SDL_Window *Window{nullptr};
     SDL_Renderer *Renderer{nullptr};

@@ -1,22 +1,9 @@
 #include "Camera.h"
-#include <stdexcept>
 
 namespace Engine
 {
-  std::unique_ptr<Camera> Camera::MainCameraInstance = nullptr;
-  SDL_Window *Camera::Window = nullptr;
-  SDL_Renderer *Camera::Renderer = nullptr;
-
-  Camera &Camera::GetMainCamera()
-  {
-    // Create the singleton instance only once
-    if (!MainCameraInstance)
-    {
-      throw std::runtime_error("Camera has not been initialized yet!");
-    }
-
-    return *MainCameraInstance;
-  }
+  Camera::Camera(SDL_Window *Window, SDL_Renderer *Renderer, uint16_t ScreenWidth, uint16_t ScreenHeight, uint8_t Zoom)
+      : Window(Window), Renderer(Renderer), ScreenWidth(ScreenWidth), ScreenHeight(ScreenHeight), Zoom(Zoom), Position{0.0f, 0.0f} {}
 
   void Camera::Update(float DeltaX, float DeltaY)
   {
@@ -77,15 +64,4 @@ namespace Engine
     // Apply the camera's transformations (scale and position)
     SDL_RenderSetScale(Renderer, Zoom, Zoom);
   }
-
-  void Camera::Initialize(SDL_Window *SDLWindow, SDL_Renderer *SDLRenderer, uint16_t ScreenWidth, uint16_t ScreenHeight, uint8_t Zoom)
-  {
-    if (!MainCameraInstance)
-    {
-      Window = SDLWindow;     // Assign the static window
-      Renderer = SDLRenderer; // Assign the static renderer
-      MainCameraInstance = std::make_unique<Camera>(ScreenWidth, ScreenHeight, Zoom);
-    }
-  }
-
-};
+}

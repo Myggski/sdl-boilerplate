@@ -1,15 +1,8 @@
-#define SDL_MAIN_HANDLED
-
 #include "GameEngine.h"
 #include <SDL.h>
 #include <stdexcept>
 #include <chrono>
-#include "src/sdl/SDLEventDispatcher.h"
-#include "src/sdl/SDLEventHandler.h"
-#include "src/AssetManager.h"
-#include "src/InputManager.h"
 #include <SDL_image.h>
-#include "src/Camera.h"
 
 namespace Engine
 {
@@ -25,7 +18,7 @@ namespace Engine
 
   bool GameEngine::Initialize()
   {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0)
     {
       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
       return false;
@@ -47,19 +40,16 @@ namespace Engine
       return false;
     }
 
-    SDLQuitEventId = Dispatcher.RegisterEventListener(SDL_QUIT, [&](const SDL_Event &Event)
-                                                      { Shutdown(); });
+    Context = std::make_unique<EngineContext>(Window, Renderer);
 
-    // Initialize managers
-    Engine::AssetManager::GetInstance().Initialize(Renderer);
-    Engine::InputManager::GetInstance().Initialize(Dispatcher);
-    Engine::Camera::Initialize(Window, Renderer, 320, 180, 6.f); // Initialize camera with default values
+    SDLQuitEventId = Context->Dispatcher.RegisterEventListener(SDL_QUIT, [&](const SDL_Event &Event)
+                                                                { Shutdown(); });
 
     IsGameRunning = true;
 
     if (EngineData != nullptr)
     {
-      EngineData->Initialize(Window, Renderer, &Dispatcher);
+      EngineData->Startup(*Context);
     }
 
     return true;
@@ -71,7 +61,7 @@ namespace Engine
     constexpr uint8_t MaxFrameSkip = 5;
     float Lag = 0.0f;
 
-    Engine::Camera &MainCamera = Engine::Camera::GetMainCamera();
+    Engine::Camera &MainCamera = Context->MainCamera;
 
     std::chrono::steady_clock::time_point PreviousTime{std::chrono::high_resolution_clock::now()};
 
@@ -88,20 +78,27 @@ namespace Engine
 
       // Process input
 
-      Dispatcher.PollEvents();
+      Context->Dispatcher.PollEvents();
 
       if (!IsGameRunning)
       {
         break;
       }
 
+      // UI layout/hit-testing happen here, before gameplay reads input, so this frame's pointer
+      // claim (see InputManager::SetPointerClaimed) is already set by the time Game::Update()
+      // asks, not one frame late.
+      Context->UICanvas.UpdateLayout(Renderer);
+      Context->UICanvas.ProcessInput(Context->Input);
+
       // Fixed update loop
       uint8_t UpdateCount{0};
       while (Lag >= FixedTimeStep && UpdateCount < MaxFrameSkip)
       {
+        Context->World.RunSystems(FixedTimeStep);
         if (EngineData)
         {
-          EngineData->Update(FixedTimeStep);
+          EngineData->Update(*Context, FixedTimeStep);
         }
         Lag -= FixedTimeStep;
         ++UpdateCount;
@@ -110,16 +107,25 @@ namespace Engine
       MainCamera.PreRender();
 
       // Render only once per frame
+      Context->Overlay.BeginFrame();
       if (EngineData)
       {
-        EngineData->Draw(Renderer);
+        EngineData->Draw(*Context);
       }
+
+      // UI (and the debug overlay below) render in real screen pixels, not the pixel-art zoom
+      // scale the game world just rendered at.
+      MainCamera.ResetScale();
+      Context->UICanvas.Render(Renderer);
+      Context->Overlay.EndFrame(Renderer, MainCamera);
 
       MainCamera.PostRender();
 
       // Update the screen
       SDL_RenderClear(Renderer);
       SDL_GL_SwapWindow(Window);
+
+      Context->Input.LateUpdate();
     }
 
     Cleanup();
@@ -129,16 +135,23 @@ namespace Engine
   {
     IsGameRunning = false;
 
-    if (EngineData)
+    if (EngineData && Context)
     {
-      EngineData->Shutdown();
+      EngineData->Shutdown(*Context);
     }
   }
 
   void GameEngine::Cleanup()
   {
-    Dispatcher.RemoveEventListener(SDL_QUIT, SDLQuitEventId);
-    InputManager::GetInstance().Clear();
+    if (Context)
+    {
+      Context->Dispatcher.RemoveEventListener(SDL_QUIT, SDLQuitEventId);
+    }
+
+    // Destroy Assets/Input/Camera/Overlay/Dispatcher while the renderer and window are still
+    // valid, since AssetManager frees SDL_Texture objects that belong to the renderer and
+    // DebugOverlay tears down Dear ImGui's SDL/renderer backends.
+    Context.reset();
 
     SDL_DestroyWindow(Window);
     SDL_DestroyRenderer(Renderer);

@@ -5,19 +5,19 @@
       "name": "C++ Clang Debug (x64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}\\build\\x64\\${workspaceFolderBasename}.exe",
+      "program": "${workspaceFolder}\\build\\x64-debug\\${workspaceFolderBasename}.exe",
       "args": [],
-      "cwd": "${workspaceFolder}\\build\\x64",
+      "cwd": "${workspaceFolder}\\build\\x64-debug",
       "preLaunchTask": "Build Debug x64", // This needs to be the same name as in the "label" property in tasks.json
     },
     {
-      "name": "C++ Clang Debug (x86)",
+      "name": "C++ Clang Release (x64)",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}\\build\\x86\\${workspaceFolderBasename}.exe",
+      "program": "${workspaceFolder}\\build\\x64-release\\${workspaceFolderBasename}.exe",
       "args": [],
-      "cwd": "${workspaceFolder}\\build\\x86",
-      "preLaunchTask": "Build Debug x86", // This needs to be the same name as in the "label" property in tasks.json
+      "cwd": "${workspaceFolder}\\build\\x64-release",
+      "preLaunchTask": "Build Release x64",
     }
   ]
 }

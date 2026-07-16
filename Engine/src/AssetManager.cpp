@@ -2,31 +2,28 @@
 
 namespace Engine
 {
-  // Initialize the static unique pointer
-  std::unique_ptr<AssetManager> AssetManager::Instance = nullptr;
-
-  AssetManager::AssetManager()
+  AssetManager::AssetManager(SDL_Renderer *Renderer) : Renderer(Renderer)
   {
     Assets.reserve(256);
+
+    if (TTF_Init() < 0)
+    {
+      SDL_Log("Failed to initialize SDL_ttf: %s", TTF_GetError());
+    }
+    else
+    {
+      TTFInitialized = true;
+    }
   }
 
   AssetManager::~AssetManager()
   {
     ClearAssets();
-  }
 
-  AssetManager &AssetManager::GetInstance()
-  {
-    if (!Instance)
+    if (TTFInitialized)
     {
-      Instance.reset(new AssetManager());
+      TTF_Quit();
     }
-    return *Instance;
-  }
-
-  void AssetManager::Initialize(SDL_Renderer *NewRenderer)
-  {
-    Renderer = NewRenderer;
   }
 
   SDL_Texture *AssetManager::LoadTexture(const std::string &FilePath)
@@ -51,8 +48,30 @@ namespace Engine
     return LoadedTexture;
   }
 
+  TTF_Font *AssetManager::LoadFont(const std::string &FilePath, int PointSize)
+  {
+    std::string Key = FilePath + "@" + std::to_string(PointSize);
+
+    auto FontIterator = Fonts.find(Key);
+    if (FontIterator != Fonts.end())
+    {
+      return FontIterator->second.get();
+    }
+
+    TTF_Font *LoadedFont = TTF_OpenFont(FilePath.c_str(), PointSize);
+    if (!LoadedFont)
+    {
+      SDL_Log("Failed to load font '%s' at size %d: %s", FilePath.c_str(), PointSize, TTF_GetError());
+      return nullptr;
+    }
+
+    Fonts[Key] = std::unique_ptr<TTF_Font, TTF_FontDeleter>(LoadedFont);
+    return LoadedFont;
+  }
+
   void AssetManager::ClearAssets()
   {
     Assets.clear();
+    Fonts.clear();
   }
 }

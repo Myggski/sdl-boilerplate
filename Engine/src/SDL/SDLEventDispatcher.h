@@ -21,7 +21,6 @@ namespace Engine
 
   private:
     std::unordered_map<uint32_t, GameEvent<SDL_Event>> EventMap; // Events by SDL type
-    std::vector<std::pair<uint32_t, uint32_t>> PendingForRemoval;
     GameEvent<SDL_Event> RawSDLEvent;
   };
 }

@@ -5,14 +5,15 @@
 
 namespace Engine
 {
-    struct ENGINE_API TransformComponent
-    {
-        Vector2D Position{0.0f, 0.0f};
-        Vector2D Scale{1.0f, 1.0f};
-        float Rotation = 0.0f;
+  struct ENGINE_API TransformComponent
+  {
+  public:
+    TransformComponent();
+    TransformComponent(Vector2D Position, float Rotation, Vector2D Scale);
 
-        TransformComponent() = default;
-        TransformComponent(Vector2D Position, float Rotation, Vector2D Scale)
-            : Position(Position), Rotation(Rotation), Scale(Scale) {}
-    };
+  public:
+    Vector2D Position{0.0f, 0.0f};
+    Vector2D Scale{1.0f, 1.0f};
+    float Rotation = 0.0f;
+  };
 }

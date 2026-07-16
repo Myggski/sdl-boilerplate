@@ -1,45 +1,43 @@
 
 #include "InputManager.h"
 #include "sdl/SDLEventDispatcher.h"
+#include "Log.h"
 
 namespace Engine
 {
-  std::unique_ptr<InputManager> InputManager::Instance = nullptr;
-
   InputData::InputData(SDL_Scancode Scancode) : Scancode(Scancode) {}
 
-  InputManager::InputManager()
+  InputManager::InputManager(SDLEventDispatcher &Dispatcher)
   {
-    // Subscribe to SDL events
-    EventHandlers.reserve(5);
+    EventHandlers.reserve(7);
+
+    EventHandlers.emplace_back(Dispatcher, SDL_KEYDOWN, [this](const SDL_Event &Event)
+                               { OnKeyPressed(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_KEYUP, [this](const SDL_Event &Event)
+                               { OnKeyReleased(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEMOTION, [this](const SDL_Event &Event)
+                               { OnMouseMotion(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEBUTTONDOWN, [this](const SDL_Event &Event)
+                               { OnMouseButtonDown(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEBUTTONUP, [this](const SDL_Event &Event)
+                               { OnMouseButtonUp(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_CONTROLLERDEVICEADDED, [this](const SDL_Event &Event)
+                               { OnGamepadDeviceAdded(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_CONTROLLERDEVICEREMOVED, [this](const SDL_Event &Event)
+                               { OnGamepadDeviceRemoved(Event); });
   }
 
-  InputManager &InputManager::GetInstance()
+  InputManager::~InputManager()
   {
-    if (!Instance)
+    for (auto &[JoystickId, Controller] : Gamepads)
     {
-      Instance.reset(new InputManager());
+      SDL_GameControllerClose(Controller);
     }
-    return *Instance;
   }
 
-  void InputManager::Initialize(SDLEventDispatcher &Dispatcher)
+  void InputManager::LateUpdate()
   {
-    EventHandlers.emplace_back(Dispatcher, SDL_KEYDOWN, [](const SDL_Event &Event)
-                               { GetInstance().OnKeyPressed(Event); });
-    EventHandlers.emplace_back(Dispatcher, SDL_KEYUP, [](const SDL_Event &Event)
-                               { GetInstance().OnKeyReleased(Event); });
-    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEMOTION, [](const SDL_Event &Event)
-                               { GetInstance().OnMouseMotion(Event); });
-    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEBUTTONDOWN, [](const SDL_Event &Event)
-                               { GetInstance().OnMouseButtonDown(Event); });
-    EventHandlers.emplace_back(Dispatcher, SDL_MOUSEBUTTONUP, [](const SDL_Event &Event)
-                               { GetInstance().OnMouseButtonUp(Event); });
-  }
-
-  void InputManager::Clear()
-  {
-    EventHandlers.clear();
+    PreviousMouseButtons = MouseButtons;
   }
 
   void InputManager::OnKeyPressed(SDL_Event Event)
@@ -77,6 +75,38 @@ namespace Engine
     MouseButtons[Event.button.button] = false; // Mark the button as released
   }
 
+  void InputManager::OnGamepadDeviceAdded(SDL_Event Event)
+  {
+    // Event.cdevice.which is a transient device index here, not a stable id; opening the
+    // controller is also required to receive any further events for it.
+    SDL_GameController *Controller = SDL_GameControllerOpen(Event.cdevice.which);
+    if (!Controller)
+    {
+      ENGINE_LOG_ERROR("Failed to open gamepad %d: %s", Event.cdevice.which, SDL_GetError());
+      return;
+    }
+
+    SDL_JoystickID JoystickId = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(Controller));
+    Gamepads[JoystickId] = Controller;
+
+    GamepadConnected.Broadcast(JoystickId);
+  }
+
+  void InputManager::OnGamepadDeviceRemoved(SDL_Event Event)
+  {
+    // Unlike ADDED, Event.cdevice.which here already is the stable SDL_JoystickID.
+    SDL_JoystickID JoystickId = Event.cdevice.which;
+
+    auto Iterator = Gamepads.find(JoystickId);
+    if (Iterator != Gamepads.end())
+    {
+      SDL_GameControllerClose(Iterator->second);
+      Gamepads.erase(Iterator);
+    }
+
+    GamepadDisconnected.Broadcast(JoystickId);
+  }
+
   bool InputManager::IsKeyPressed(const SDL_Scancode Scancode) const
   {
     return Keys.contains(Scancode);
@@ -94,14 +124,46 @@ namespace Engine
     return Iterator != Keys.end() && Iterator->second.NumberOfRepeats >= 1;
   }
 
-  bool InputManager::IsMouseButtonPressed(Uint8 button) const
+  bool InputManager::IsMouseButtonPressed(Uint8 button, bool RespectUIClaim) const
   {
+    if (RespectUIClaim && PointerClaimed)
+    {
+      return false;
+    }
+
     auto Iterator = MouseButtons.find(button);
     return Iterator != MouseButtons.end() && Iterator->second;
   }
 
-  bool InputManager::IsMouseButtonReleased(Uint8 button) const
+  bool InputManager::IsMouseButtonReleased(Uint8 button, bool RespectUIClaim) const
   {
-    return PreviousMouseButtons.at(button) && !MouseButtons.at(button);
+    if (RespectUIClaim && PointerClaimed)
+    {
+      return false;
+    }
+
+    auto WasPressed = PreviousMouseButtons.find(button);
+    auto IsPressed = MouseButtons.find(button);
+
+    bool WasDown = WasPressed != PreviousMouseButtons.end() && WasPressed->second;
+    bool IsDown = IsPressed != MouseButtons.end() && IsPressed->second;
+
+    return WasDown && !IsDown;
+  }
+
+  bool InputManager::IsMouseButtonJustPressed(Uint8 button, bool RespectUIClaim) const
+  {
+    if (RespectUIClaim && PointerClaimed)
+    {
+      return false;
+    }
+
+    auto WasPressed = PreviousMouseButtons.find(button);
+    auto IsPressed = MouseButtons.find(button);
+
+    bool WasDown = WasPressed != PreviousMouseButtons.end() && WasPressed->second;
+    bool IsDown = IsPressed != MouseButtons.end() && IsPressed->second;
+
+    return IsDown && !WasDown;
   }
 }

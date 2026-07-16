@@ -3,23 +3,16 @@
 #include "Core.h"
 #include <SDL.h>
 #include <cmath>
-#include <memory>
 
 namespace Engine
 {
   class ENGINE_API Camera
   {
   public:
-    Camera(uint16_t ScreenWidth = 320, uint16_t ScreenHeight = 180, uint8_t Zoom = 6.f)
-        : ScreenWidth(ScreenWidth), ScreenHeight(ScreenHeight), Zoom(Zoom), Position{0.0f, 0.0f} {}
-    // Deleted constructor to prevent instantiation from outside
+    Camera(SDL_Window *Window, SDL_Renderer *Renderer, uint16_t ScreenWidth = 320, uint16_t ScreenHeight = 180, uint8_t Zoom = 6);
+
     Camera(const Camera &) = delete;
     Camera &operator=(const Camera &) = delete;
-
-    static void Initialize(SDL_Window *SDLWindow, SDL_Renderer *SDLRenderer, uint16_t ScreenWidth = 320, uint16_t ScreenHeight = 180, uint8_t Zoom = 6);
-
-    // Static method to access the main camera instance
-    static Camera &GetMainCamera();
 
     // Update the camera position based on some offset
     void Update(float DeltaX, float DeltaY);
@@ -47,11 +40,8 @@ namespace Engine
     void SetZoomScale();
 
   private:
-    // Static unique pointer to hold the singleton instance
-    static std::unique_ptr<Camera> MainCameraInstance;
-
-    static SDL_Window *Window;
-    static SDL_Renderer *Renderer;
+    SDL_Window *Window;
+    SDL_Renderer *Renderer;
     SDL_FPoint Position{0, 0};
     uint16_t ScreenWidth = 320;
     uint16_t ScreenHeight = 180;

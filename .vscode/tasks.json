@@ -6,18 +6,10 @@
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S",
-        ".", // Source directory
-        "-B",
-        "build/x64", // Build directory
-        "-G",
-        "Ninja",
-        "-DARCH=x64",
+        "--preset",
+        "x64-debug"
       ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
+      "group": "build"
     },
     {
       "label": "Build Debug x64",
@@ -25,9 +17,8 @@
       "command": "cmake",
       "args": [
         "--build",
-        "${workspaceFolder}\\build\\x64",
-        "--config",
-        "Debug"
+        "--preset",
+        "x64-debug"
       ],
       "group": {
         "kind": "build",
@@ -38,39 +29,27 @@
       ]
     },
     {
-      "label": "Configure Debug x86",
+      "label": "Configure Release x64",
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S",
-        ".",
-        "-B",
-        "build/x86",
-        "-G",
-        "Ninja",
-        "-DARCH=x86",
+        "--preset",
+        "x64-release"
       ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
+      "group": "build"
     },
     {
-      "label": "Build Debug x86",
+      "label": "Build Release x64",
       "type": "shell",
       "command": "cmake",
       "args": [
         "--build",
-        "${workspaceFolder}\\build\\x86",
-        "--config",
-        "Debug"
+        "--preset",
+        "x64-release"
       ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
+      "group": "build",
       "dependsOn": [
-        "Configure Debug x86"
+        "Configure Release x64"
       ]
     }
   ]

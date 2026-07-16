@@ -1,13 +1,14 @@
 #pragma once
 
 #include "Core.h"
+#include <any>
 #include <bitset>
+#include <deque>
 #include <vector>
-#include <queue>
 #include <functional>
-#include <cstring>
 #include "Entity.h"
-#include "ComponentStorage.h"
+#include "ComponentArray.h"
+#include "ComponentType.h"
 
 namespace Engine
 {
@@ -30,38 +31,76 @@ namespace Engine
     bool IsEntityAlive(Engine::Entity Entity) const;
 
     // Component Management
-    void RemoveComponent(Engine::Entity Entity, int ComponentId);
-
     template <typename T>
-    void AddComponent(Engine::Entity Entity, int ComponentId, const T &Component)
+    void AddComponent(Engine::Entity Entity, const T &Component)
     {
       if (!IsEntityAlive(Entity))
       {
         throw std::runtime_error("Cannot add component to inactive entity!");
       }
 
-      if (ComponentId < 0 || ComponentId >= MAX_COMPONENTS)
+      ComponentId Id = GetComponentId<T>();
+      if (Id >= MAX_COMPONENTS)
       {
-        throw std::invalid_argument("Invalid ComponentId.");
+        throw std::invalid_argument("Exceeded MAX_COMPONENTS distinct component types.");
       }
 
-      // Add the component to the storage
-      Components[ComponentId].AddComponent<T>(Entity, std::forward<const T>(Component));
+      if (!Components[Id].has_value())
+      {
+        Components[Id] = ComponentArray<T>(MAX_ENTITIES);
+      }
 
-      // Update the component mask
-      ComponentMasks[Entity.Index()].set(ComponentId);
+      std::any_cast<ComponentArray<T> &>(Components[Id]).Set(Entity, Component);
+      ComponentMasks[Entity.Index()].set(Id);
     }
 
     template <typename T>
-    T *GetComponent(Engine::Entity Entity, int32_t ComponentId)
+    T *GetComponent(Engine::Entity Entity)
     {
-      if (!IsEntityAlive(Entity) || !ComponentMasks[Entity.Index()].test(ComponentId))
+      ComponentId Id = GetComponentId<T>();
+      if (!IsEntityAlive(Entity) || Id >= MAX_COMPONENTS || !ComponentMasks[Entity.Index()].test(Id))
       {
         return nullptr;
       }
 
-      // Retrieve the component from storage
-      return Components[ComponentId].GetComponent<T>(Entity);
+      return &std::any_cast<ComponentArray<T> &>(Components[Id]).Get(Entity);
+    }
+
+    template <typename T>
+    void RemoveComponent(Engine::Entity Entity)
+    {
+      if (!IsEntityAlive(Entity))
+      {
+        return;
+      }
+
+      ComponentId Id = GetComponentId<T>();
+      if (Id >= MAX_COMPONENTS)
+      {
+        return;
+      }
+
+      ComponentMasks[Entity.Index()].reset(Id);
+    }
+
+    // Calls Callback(Entity, T1&, T2&, ...) for every alive entity that has all of Components...
+    // e.g. Manager.ForEach<Position, Velocity>([](Entity E, Position &P, Velocity &V) { ... });
+    template <typename... QueryComponents, typename Func>
+    void ForEach(Func &&Callback)
+    {
+      for (uint32_t Index = 0; Index < MAX_ENTITIES; ++Index)
+      {
+        if (!IsAlive[Index])
+        {
+          continue;
+        }
+
+        Engine::Entity Candidate = MakeEntity(Index, EntityGeneration[Index]);
+        if ((GetComponent<QueryComponents>(Candidate) && ...))
+        {
+          Callback(Candidate, (*GetComponent<QueryComponents>(Candidate))...);
+        }
+      }
     }
 
     // System Management
@@ -74,9 +113,10 @@ namespace Engine
   private:
     // Internal Data
     std::vector<uint8_t> EntityGeneration;     // Tracks the generation for each entity slot
+    std::vector<bool> IsAlive;                 // Tracks which indices are currently in use, for ForEach
     std::deque<uint32_t> FreeIndices;          // Queue of recycled indices
     std::vector<ComponentMask> ComponentMasks; // Component masks
     std::vector<SystemFunc> Systems;           // Registered systems
-    std::vector<ComponentStorage> Components;  // Component storage array
+    std::vector<std::any> Components;          // One ComponentArray<T> per component type, indexed by ComponentId
   };
 }

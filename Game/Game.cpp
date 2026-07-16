@@ -1,155 +1,131 @@
 #include "Game.h"
 #include "Engine.h"
-#include <SDL.h>
 #include <SDL_image.h>
-#include "imgui.h"
-#include <memory>
-#include "backends/imgui_impl_sdl2.h"
-#include "backends/imgui_impl_sdlrenderer2.h"
 
+#ifdef ENGINE_WITH_DEBUG_UI
+#include "imgui.h"
+#endif
+
+// This is a minimal example game: one entity with a Transform and a Velocity, moved each tick by
+// a system, drawn as a sprite. Extend it, or replace it with your own.
 namespace Game
 {
-  // Component IDs
-  constexpr int COMPONENT_POSITION = 0;
-  constexpr int COMPONENT_VELOCITY = 1;
+  Engine::Entity Player;
+  SDL_Texture *PlayerTexture = nullptr;
+  Engine::UI::Widget *Indicator = nullptr;
 
-  static Engine::EntityManager EntityManager;
-  static Engine::Entity Player;
-
-  // Position Component
-  struct Position
+  void MovementSystem(Engine::EntityManager &World, float DeltaTime)
   {
-    float x, y;
-  };
-
-  inline void MovementSystem(Engine::EntityManager &Manager, float DeltaTime)
-  {
-    for (size_t EntityIndex = 0; EntityIndex < Engine::MAX_ENTITIES; ++EntityIndex)
-    {
-      Engine::Entity Entity;
-      Entity.Id = EntityIndex;
-      if (Manager.IsEntityAlive(Entity))
-      {
-        // Check if the entity has both Position and Velocity components
-        if (Position *EntityPosition = Manager.GetComponent<Position>(Entity, COMPONENT_POSITION))
+    World.ForEach<Engine::TransformComponent, Engine::VelocityComponent>(
+        [DeltaTime](Engine::Entity, Engine::TransformComponent &Transform, Engine::VelocityComponent &Velocity)
         {
-          if (Engine::VelocityComponent *EntityVelocity = Manager.GetComponent<Engine::VelocityComponent>(Entity, COMPONENT_VELOCITY))
-          {
-            // Update position based on velocity
-            EntityPosition->x += EntityVelocity->X * DeltaTime;
-            EntityPosition->y += EntityVelocity->Y * DeltaTime;
-          }
-        }
-      }
-    }
+          Transform.Position.X += Velocity.X * DeltaTime;
+          Transform.Position.Y += Velocity.Y * DeltaTime;
+        });
   }
 
-  // Definition of static member variable
-  bool Initialize(SDL_Window *Window, SDL_Renderer *Renderer, Engine::SDLEventDispatcher *SDLEventDispatcher)
+  bool Startup(Engine::EngineContext &Context)
   {
-    // Store a raw pointer to the existing dispatcher
-    EngineSDLEventDispatcher = SDLEventDispatcher;
+    Context.World.RegisterSystem([&Context](float DeltaTime)
+                                 { MovementSystem(Context.World, DeltaTime); });
 
-    // Perform drawing
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+    Player = Context.World.CreateEntity();
+    Context.World.AddComponent<Engine::TransformComponent>(Player, {});
+    Context.World.AddComponent<Engine::VelocityComponent>(Player, {1.f, 1.f});
 
-    // Use weak_ptr to avoid shared ownership
-    if (EngineSDLEventDispatcher != nullptr) // Lock weak_ptr to get shared_ptr
-    {
-      SDLEventForImGuiHandle = EngineSDLEventDispatcher->GetSDLEvent().Add([](const SDL_Event &Event)
-                                                                           { ImGui_ImplSDL2_ProcessEvent(&Event); });
-    }
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    // ImGui::StyleColorsLight();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL2_InitForSDLRenderer(Window, Renderer);
-    ImGui_ImplSDLRenderer2_Init(Renderer);
-
-    // Register systems
-    EntityManager.RegisterSystem([](float DeltaTime)
-                                 { MovementSystem(Game::EntityManager, DeltaTime); });
-
-    // Create an entity
-    Player = EntityManager.CreateEntity();
-
-    // Add components
-    Position PlayerPosition{0.0f, 0.0f};
-    Engine::VelocityComponent PlayerVelocity{1.f, 1.f};
-
-    EntityManager.AddComponent<Position>(Player, COMPONENT_POSITION, PlayerPosition);
-    EntityManager.AddComponent<Engine::VelocityComponent>(Player, COMPONENT_VELOCITY, PlayerVelocity);
-
-    // Load an image
-    ImageTexture = Engine::AssetManager::GetInstance().LoadTexture("assets/images/bomb.png");
-    if (!ImageTexture)
+    PlayerTexture = Context.Assets.LoadTexture("assets/images/bomb.png");
+    if (!PlayerTexture)
     {
       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to load image: %s\n", IMG_GetError());
       return false;
     }
 
-    // Perform initialization logic here
-    return true; // Example return value
-  }
+    // Small indicator in the top-left; the action bar's middle button toggles its Visible below,
+    // proof that hiding UI on a condition actually removes it from layout/hit-testing/rendering,
+    // not just drawing.
+    auto CornerBox = std::make_unique<Engine::UI::VerticalBox>();
+    auto IndicatorPanel = std::make_unique<Engine::UI::Panel>(SDL_Color{230, 200, 60, 255});
+    IndicatorPanel->SetDesiredSize({32.0f, 32.0f});
+    Indicator = CornerBox->AddSlot(std::move(IndicatorPanel), Engine::UI::SizeRule::Auto, 1.0f, Engine::UI::Alignment::Start, 16.0f);
+    Context.UICanvas.AddRoot(std::move(CornerBox));
 
-  // Definition of static update function
-  void Update(float DeltaTime)
-  {
-    EntityManager.RunSystems(DeltaTime);
-  }
+    // Action bar: three real Buttons, bottom-center (a Fill spacer above pushes the Auto-sized
+    // bar down; its own Padding doubles as the ~200px bottom gap, same placement as before).
+    auto RootBox = std::make_unique<Engine::UI::VerticalBox>();
+    RootBox->AddSlot(std::make_unique<Engine::UI::Widget>(), Engine::UI::SizeRule::Fill);
 
-  void Draw(SDL_Renderer *Renderer)
-  {
-    // Perform update logic here
-    ImGui_ImplSDLRenderer2_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
-    ImGui::NewFrame();
+    auto ToolbarBox = std::make_unique<Engine::UI::HorizontalBox>();
+    Engine::UI::HorizontalBox *Toolbar = ToolbarBox.get();
 
-    bool Show{true};
-    ImGui::ShowDemoWindow(&Show);
-
-    // Rendering
-    ImGui::Render();
-
-    SDL_Rect srcRect{0, 0, 16, 16};
-    SDL_Rect dstRect{100, 100, 16, 16};
-
-    // Render the image (only the 16x16 part)
-    SDL_RenderCopy(Renderer, ImageTexture, &srcRect, &dstRect);
-
-    Engine::Camera::GetMainCamera().ResetScale();
-    ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), Renderer);
-    Engine::Camera::GetMainCamera().SetZoomScale();
-  }
-
-  void Shutdown()
-  {
-    if (SDLEventForImGuiHandle > 0 && EngineSDLEventDispatcher != nullptr)
+    auto AddToolbarButton = [Toolbar](SDL_Color Normal, SDL_Color Hovered, SDL_Color Pressed)
     {
-      EngineSDLEventDispatcher->GetSDLEvent().Remove(SDLEventForImGuiHandle);
+      auto NewButton = std::make_unique<Engine::UI::Button>();
+      NewButton->SetDesiredSize({48.0f, 48.0f});
+      NewButton->SetColors(Normal, Hovered, Pressed);
+      Engine::UI::Button *Result = NewButton.get();
+      Toolbar->AddSlot(std::move(NewButton), Engine::UI::SizeRule::Auto, 1.0f, Engine::UI::Alignment::Center, 8.0f);
+      return Result;
+    };
+
+    auto ToggleIndicator = []()
+    { Indicator->Visible = !Indicator->Visible; };
+
+    // First button: a Text label as Content, on top of the normal color background.
+    Engine::UI::Button *LabelButton = AddToolbarButton(SDL_Color{200, 60, 60, 255}, SDL_Color{230, 90, 90, 255}, SDL_Color{150, 40, 40, 255});
+    // TODO: swap for a real bundled font under assets/fonts/ once one is added to the repo;
+    // this Windows system font path is demo-only and won't resolve on another machine/OS.
+    if (TTF_Font *LabelFont = Context.Assets.LoadFont("C:/Windows/Fonts/arial.ttf", 20))
+    {
+      auto Label = std::make_unique<Engine::UI::Text>();
+      Label->SetFont(LabelFont);
+      Label->SetText("Hi");
+      Label->SetColor(SDL_Color{255, 255, 255, 255});
+      LabelButton->SetContent(std::move(Label));
+    }
+    LabelButton->OnClicked().Add(ToggleIndicator);
+
+    // Second button: bomb.png as a background image instead of a flat color (darkens on press).
+    Engine::UI::Button *ImageButton = AddToolbarButton(SDL_Color{60, 200, 90, 255}, SDL_Color{90, 230, 120, 255}, SDL_Color{40, 150, 60, 255});
+    ImageButton->SetBackgroundImage(PlayerTexture);
+    ImageButton->OnClicked().Add(ToggleIndicator);
+
+    AddToolbarButton(SDL_Color{60, 90, 200, 255}, SDL_Color{90, 120, 230, 255}, SDL_Color{40, 60, 150, 255})->OnClicked().Add(ToggleIndicator);
+
+    RootBox->AddSlot(std::move(ToolbarBox), Engine::UI::SizeRule::Auto, 1.0f, Engine::UI::Alignment::Center, 200.0f);
+
+    Context.UICanvas.AddRoot(std::move(RootBox));
+
+    return true;
+  }
+
+  void Update(Engine::EngineContext &Context, float DeltaTime)
+  {
+    // Log pointer-claim transitions so it's easy to confirm the UI only blocks input where it
+    // actually is (see Engine::InputManager::IsPointerClaimed / Engine::UI::Canvas::ProcessInput).
+    static bool WasClaimed = false;
+    bool IsClaimed = Context.Input.IsPointerClaimed();
+    if (IsClaimed != WasClaimed)
+    {
+      SDL_Log("Pointer claimed by UI: %s", IsClaimed ? "true" : "false");
+      WasClaimed = IsClaimed;
+    }
+  }
+
+  void Draw(Engine::EngineContext &Context)
+  {
+    if (Engine::TransformComponent *Transform = Context.World.GetComponent<Engine::TransformComponent>(Player))
+    {
+      SDL_Rect SourceRect{0, 0, 16, 16};
+      SDL_Rect DestRect{static_cast<int>(Transform->Position.X), static_cast<int>(Transform->Position.Y), 16, 16};
+      SDL_RenderCopy(Context.Renderer, PlayerTexture, &SourceRect, &DestRect);
     }
 
-    ImGui_ImplSDLRenderer2_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+#ifdef ENGINE_WITH_DEBUG_UI
+    ImGui::ShowDemoWindow();
+#endif
   }
-}
 
-namespace Engine
-{
-  std::unique_ptr<GameEngineData> CreateGameEngineData()
+  void Shutdown(Engine::EngineContext &Context)
   {
-    return std::make_unique<GameEngineData>(
-        Game::Initialize,
-        Game::Update,
-        Game::Draw,
-        Game::Shutdown);
   }
 }

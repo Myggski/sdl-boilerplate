@@ -3,6 +3,7 @@
 #include "Core.h"
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -12,12 +13,15 @@ namespace Engine
   class ENGINE_API AssetManager
   {
   public:
+    explicit AssetManager(SDL_Renderer *Renderer);
     ~AssetManager();
 
-    static AssetManager &GetInstance();
-
-    void Initialize(SDL_Renderer *NewRenderer);
     SDL_Texture *LoadTexture(const std::string &FilePath);
+
+    // Cached by FilePath + PointSize, since a TTF_Font is rasterized at a fixed size; asking for
+    // the same file at a different size loads/keeps a second TTF_Font.
+    TTF_Font *LoadFont(const std::string &FilePath, int PointSize);
+
     void ClearAssets();
 
     // Delete copy semantics
@@ -25,8 +29,6 @@ namespace Engine
     AssetManager &operator=(const AssetManager &) = delete;
 
   private:
-    AssetManager(); // Private to enforce singleton
-
     struct SDL_TextureDeleter
     {
       void operator()(SDL_Texture *Texture) const
@@ -35,11 +37,21 @@ namespace Engine
       }
     };
 
-    static std::unique_ptr<AssetManager> Instance;
+    struct TTF_FontDeleter
+    {
+      void operator()(TTF_Font *Font) const
+      {
+        TTF_CloseFont(Font);
+      }
+    };
 
     SDL_Renderer *Renderer = nullptr;
+    bool TTFInitialized = false;
 
     using TexturePtr = std::unique_ptr<SDL_Texture, SDL_TextureDeleter>;
     std::unordered_map<std::string, TexturePtr> Assets;
+
+    using FontPtr = std::unique_ptr<TTF_Font, TTF_FontDeleter>;
+    std::unordered_map<std::string, FontPtr> Fonts;
   };
 }
