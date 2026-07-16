@@ -27,4 +27,5 @@
 #include "src/ui/Text.h"
 #include "src/ui/Image.h"
 #include "src/ui/Button.h"
+#include "src/ui/Checkbox.h"
 #include "src/ui/Canvas.h"

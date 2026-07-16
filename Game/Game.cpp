@@ -91,6 +91,14 @@ namespace Game
 
     AddToolbarButton(SDL_Color{60, 90, 200, 255}, SDL_Color{90, 120, 230, 255}, SDL_Color{40, 60, 150, 255})->OnClicked().Add(ToggleIndicator);
 
+    // Fourth entry: a Checkbox, logs its toggled state so it's easy to confirm from the console.
+    auto CheckboxWidget = std::make_unique<Engine::UI::Checkbox>();
+    CheckboxWidget->SetDesiredSize({32.0f, 32.0f});
+    Engine::UI::Checkbox *CheckboxPtr = CheckboxWidget.get();
+    Toolbar->AddSlot(std::move(CheckboxWidget), Engine::UI::SizeRule::Auto, 1.0f, Engine::UI::Alignment::Center, 8.0f);
+    CheckboxPtr->OnCheckedChanged().Add([](bool NewChecked)
+                                        { SDL_Log("Checkbox toggled: %s", NewChecked ? "true" : "false"); });
+
     RootBox->AddSlot(std::move(ToolbarBox), Engine::UI::SizeRule::Auto, 1.0f, Engine::UI::Alignment::Center, 200.0f);
 
     Context.UICanvas.AddRoot(std::move(RootBox));

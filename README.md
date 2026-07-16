@@ -35,7 +35,8 @@ Engine/
     ecs/                   Entity/EntityManager/ComponentArray, GetComponentId<T>() for automatic
                             type-safe component ids
     ui/                    Retained-mode UI: Widget, BoxContainer, HorizontalBox/VerticalBox,
-                            Panel, Text, Image, Button, Canvas (layout + hit-testing + input claim)
+                            Panel, Text, Image, Button, Checkbox, Canvas (layout + hit-testing +
+                            input claim)
 
 Game/
   Game.h/.cpp        The file to write a game in: Startup/Update/Draw/Shutdown
@@ -58,4 +59,4 @@ CMakePresets.json           x64-debug/x64-release/x64-debug-msvc
 - `AnimationSystem`/`SpriteComponent` exist but aren't wired into anything yet; `Game.cpp` draws
   its sprite directly in `Draw` instead.
 - `x64-debug-msvc` only covers the CMake configure/build side, no VS Code launch config yet.
-- The UI system has no `Checkbox`/`Dropdown`/`Scalar` widgets and no MVVM/data-binding layer yet.
+- The UI system has no `Dropdown`/`Scalar` widgets and no MVVM/data-binding layer yet.
