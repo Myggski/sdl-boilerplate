@@ -4,6 +4,11 @@ project(sdl-boilerplate-engine)
 # SDL2 / SDL2_image / SDL2_ttf are fetched automatically (see cmake/Dependencies.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/Dependencies.cmake)
 
+# Engine-owned assets (currently just the default UI font, see AssetManager::LoadDefaultFont).
+# Copied into the same shared ${CMAKE_BINARY_DIR}/assets Game/CMakeLists.txt copies its own
+# assets/ into, so both land in one merged assets/ folder next to the built executable.
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+
 # Set the sources for the Engine
 file(GLOB ENGINE_SOURCE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp

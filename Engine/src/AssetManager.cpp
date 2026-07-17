@@ -2,6 +2,11 @@
 
 namespace Engine
 {
+  namespace
+  {
+    constexpr const char *DefaultFontPath = "assets/fonts/Roboto/Roboto-Regular.ttf";
+  }
+
   AssetManager::AssetManager(SDL_Renderer *Renderer) : Renderer(Renderer)
   {
     Assets.reserve(256);
@@ -67,6 +72,11 @@ namespace Engine
 
     Fonts[Key] = std::unique_ptr<TTF_Font, TTF_FontDeleter>(LoadedFont);
     return LoadedFont;
+  }
+
+  TTF_Font *AssetManager::LoadDefaultFont(int PointSize)
+  {
+    return LoadFont(DefaultFontPath, PointSize);
   }
 
   void AssetManager::ClearAssets()

@@ -72,7 +72,7 @@ namespace Game
 
     // First button: a Text label as Content, on top of the normal color background.
     Engine::UI::Button *LabelButton = AddToolbarButton(SDL_Color{200, 60, 60, 255}, SDL_Color{230, 90, 90, 255}, SDL_Color{150, 40, 40, 255});
-    if (TTF_Font *LabelFont = Context.Assets.LoadFont("assets/fonts/Roboto-Regular.ttf", 20))
+    if (TTF_Font *LabelFont = Context.Assets.LoadDefaultFont(20))
     {
       auto Label = std::make_unique<Engine::UI::Text>();
       Label->SetFont(LabelFont);

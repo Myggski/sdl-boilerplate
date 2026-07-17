@@ -25,10 +25,12 @@ yet). VS Code: "Build Debug/Release x64" tasks + matching lldb launch configs in
 Engine/
   Core.h, Engine.h, EntryPoint.h, GameEngine.h/.cpp   DLL export macros, umbrella include, main(),
                                                         fixed-timestep loop calling into GameEngineData
+  assets/fonts/Roboto/    Engine-owned default UI font (Apache-2.0), copied next to the built
+                          executable same as Game/assets/
   src/
     EngineContext.h/.cpp   Bundles Window/Renderer/Assets/Input/Camera/World/UICanvas/Overlay,
                             passed by reference through the Startup/Update/Draw/Shutdown callbacks
-    AssetManager.h/.cpp    Texture + font cache
+    AssetManager.h/.cpp    Texture + font cache, LoadDefaultFont() for the bundled Roboto font
     InputManager.h/.cpp    Keyboard/mouse/gamepad state, plus the UI pointer-claim flag
     Camera.h/.cpp          Screen-space zoom/scale for pixel art
     DebugOverlay.h/.cpp    Dear ImGui setup/frame bracketing, Debug builds only
@@ -41,7 +43,7 @@ Engine/
 Game/
   Game.h/.cpp        The file to write a game in: Startup/Update/Draw/Shutdown
   Bootstrap.cpp      Framework glue implementing Engine::CreateGameEngineData(); no need to open it
-  assets/            Game content (images, fonts)
+  assets/            Game content (images); the engine's own default font lives in Engine/assets/
 
 cmake/Dependencies.cmake   FetchContent for SDL2/SDL2_image/SDL2_ttf
 CMakePresets.json           x64-debug/x64-release/x64-debug-msvc

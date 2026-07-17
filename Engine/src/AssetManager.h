@@ -22,6 +22,11 @@ namespace Engine
     // the same file at a different size loads/keeps a second TTF_Font.
     TTF_Font *LoadFont(const std::string &FilePath, int PointSize);
 
+    // Engine's bundled default UI font (Roboto), for widgets that just need "a font" without the
+    // caller needing to know exactly where it lives on disk. Copied next to the built executable
+    // by Engine/CMakeLists.txt, same as Game's own assets/.
+    TTF_Font *LoadDefaultFont(int PointSize);
+
     void ClearAssets();
 
     // Delete copy semantics
