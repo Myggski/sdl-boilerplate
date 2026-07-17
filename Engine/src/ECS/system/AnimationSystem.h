@@ -1,16 +1,15 @@
 #pragma once
 
 #include "Core.h"
-#include "src/ecs/component/AnimationComponent.h"
-#include <vector>
 
 namespace Engine
 {
-  class ENGINE_API AnimationSystem
-  {
-  public:
-    void Update(float DeltaTime)
-    {
-    }
-  };
+  class EntityManager;
+
+  // Advances AnimationComponent::Timer/CurrentFrame for every entity with both an Animation and a
+  // Sprite, writing the current frame's Rect into that SpriteComponent's SourceRect. Opt-in like
+  // any other system, register it yourself, e.g.
+  //   Context.World.RegisterSystem([&Context](float DeltaTime)
+  //     { AnimationSystem(Context.World, DeltaTime); });
+  ENGINE_API void AnimationSystem(EntityManager &World, float DeltaTime);
 }

@@ -4,6 +4,7 @@
 #include <any>
 #include <bitset>
 #include <deque>
+#include <tuple>
 #include <vector>
 #include <functional>
 #include "Entity.h"
@@ -96,9 +97,14 @@ namespace Engine
         }
 
         Engine::Entity Candidate = MakeEntity(Index, EntityGeneration[Index]);
-        if ((GetComponent<QueryComponents>(Candidate) && ...))
+
+        // Fetch each queried component pointer once (not once to check presence, then again to
+        // build the callback args): GetComponent already does a bitset test + any_cast per call,
+        // no reason to pay for that twice per entity per queried type.
+        std::tuple<QueryComponents *...> Found{GetComponent<QueryComponents>(Candidate)...};
+        if ((std::get<QueryComponents *>(Found) && ...))
         {
-          Callback(Candidate, (*GetComponent<QueryComponents>(Candidate))...);
+          Callback(Candidate, (*std::get<QueryComponents *>(Found))...);
         }
       }
     }
