@@ -10,26 +10,30 @@ namespace Engine::UI
 
   Checkbox::~Checkbox() = default;
 
-  void Checkbox::SetChecked(bool NewChecked)
+  Checkbox *Checkbox::SetChecked(bool NewChecked)
   {
     Checked = NewChecked;
+    return this;
   }
 
-  void Checkbox::SetBoxColors(SDL_Color Normal, SDL_Color Hovered, SDL_Color Pressed)
+  Checkbox *Checkbox::SetBoxColors(Color Normal, Color Hovered, Color Pressed)
   {
     NormalColor = Normal;
     HoveredColor = Hovered;
     PressedColor = Pressed;
+    return this;
   }
 
-  void Checkbox::SetCheckColor(SDL_Color NewColor)
+  Checkbox *Checkbox::SetCheckColor(Color NewColor)
   {
     CheckColor = NewColor;
+    return this;
   }
 
-  void Checkbox::SetDesiredSize(Size NewSize)
+  Checkbox *Checkbox::SetDesiredSize(Size NewSize)
   {
     DesiredSize = NewSize;
+    return this;
   }
 
   Size Checkbox::Measure(Size)
@@ -44,7 +48,7 @@ namespace Engine::UI
       return;
     }
 
-    SDL_Color BoxColor = IsPressedDown ? PressedColor : (IsHovered ? HoveredColor : NormalColor);
+    Color BoxColor = IsPressedDown ? PressedColor : (IsHovered ? HoveredColor : NormalColor);
 
     SDL_Rect BoxRect{
         static_cast<int>(ComputedRect.X),
@@ -56,7 +60,7 @@ namespace Engine::UI
     SDL_GetRenderDrawBlendMode(Renderer, &PreviousBlendMode);
     SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
 
-    SDL_SetRenderDrawColor(Renderer, BoxColor.r, BoxColor.g, BoxColor.b, BoxColor.a);
+    SDL_SetRenderDrawColor(Renderer, BoxColor.R, BoxColor.G, BoxColor.B, BoxColor.A);
     SDL_RenderFillRect(Renderer, &BoxRect);
 
     if (Checked)
@@ -69,7 +73,7 @@ namespace Engine::UI
           static_cast<int>(ComputedRect.Width - InsetX * 2.0f),
           static_cast<int>(ComputedRect.Height - InsetY * 2.0f)};
 
-      SDL_SetRenderDrawColor(Renderer, CheckColor.r, CheckColor.g, CheckColor.b, CheckColor.a);
+      SDL_SetRenderDrawColor(Renderer, CheckColor.R, CheckColor.G, CheckColor.B, CheckColor.A);
       SDL_RenderFillRect(Renderer, &CheckRect);
     }
 
@@ -87,7 +91,7 @@ namespace Engine::UI
     IsPressedDown = false;
   }
 
-  void Checkbox::OnPointerDown()
+  void Checkbox::OnPointerDown(float, float)
   {
     IsPressedDown = true;
   }

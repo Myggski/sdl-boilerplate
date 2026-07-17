@@ -67,6 +67,19 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithD
 set(BUILD_DIR "${CMAKE_BINARY_DIR}" CACHE STRING "BuildDir" FORCE)
 set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/install/${ARCH}" CACHE STRING "InstallDir" FORCE)
 
+# `cmake --install <build-dir>` with no extra flags lands here by default: a clean, player-ready
+# folder (just the .exe, the DLLs it actually needs, and assets/ — no .pdb/.lib/build artifacts).
+# `CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT` is NOT a reliable guard for "did the caller
+# override this" here — it's only true on a build directory's very first configure, so it goes
+# stale (false) on every reconfigure after that. `cmake --install <dir> --prefix <other>` already
+# overrides this per-invocation without touching the cache, so a plain FORCE default is enough.
+set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE PATH "Install path" FORCE)
+
 # Add subdirectories for engine and game projects
 add_subdirectory(Engine)
 add_subdirectory(Game)
+
+# Engine's and Game's own file(COPY ... assets ...) calls (see their CMakeLists.txt) both target
+# this same ${CMAKE_BINARY_DIR}/assets folder, merging into one at configure time — install that
+# merged result rather than either source assets/ alone.
+install(DIRECTORY ${CMAKE_BINARY_DIR}/assets DESTINATION .)

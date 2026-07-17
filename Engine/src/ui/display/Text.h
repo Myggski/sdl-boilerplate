@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Core.h"
-#include "Widget.h"
-#include <SDL_pixels.h>
+#include "../Widget.h"
+#include "../Theme.h"
+#include "../../AssetManager.h"
 #include <string>
+#include <memory>
 
 struct _TTF_Font;
 using TTF_Font = _TTF_Font;
@@ -23,9 +25,9 @@ namespace Engine::UI
     Text();
     ~Text() override;
 
-    void SetFont(TTF_Font *NewFont);
-    void SetText(const std::string &NewText);
-    void SetColor(SDL_Color NewColor);
+    Text *SetFont(TTF_Font *NewFont);
+    Text *SetText(const std::string &NewText);
+    Text *SetColor(Color NewColor);
 
     Size Measure(Size AvailableSize) override;
     void Render(SDL_Renderer *Renderer) override;
@@ -35,9 +37,21 @@ namespace Engine::UI
 
     TTF_Font *Font = nullptr;
     std::string Content;
-    SDL_Color Color{255, 255, 255, 255};
+    Color TextColor = Theme::TextPrimary;
 
     SDL_Texture *Texture = nullptr;
     bool Dirty = true;
   };
+
+  // Convenience: builds a Text widget with a loaded font in one call, rather than the multi-step
+  // CreateWidget<Text>()->SetFont(Assets.LoadDefaultFont(Size))->SetText(...)->SetColor(...)
+  // dance. Style defaults come from Theme::TextStyle; pass e.g. {.PointSize = 20} to override
+  // just that field. Takes AssetManager explicitly (not a global default font) so the dependency
+  // stays visible at the call site and there is no reliance on engine startup having run first.
+  inline std::unique_ptr<Text> CreateLabel(Engine::AssetManager &Assets, const std::string &InText, Theme::TextStyle Style = {})
+  {
+    std::unique_ptr<Text> Label = CreateWidget<Text>();
+    Label->SetFont(Assets.LoadDefaultFont(Style.PointSize))->SetText(InText)->SetColor(Style.Color);
+    return Label;
+  }
 }

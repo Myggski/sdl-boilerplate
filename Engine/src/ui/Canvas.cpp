@@ -21,13 +21,6 @@ namespace Engine::UI
   Canvas::Canvas() = default;
   Canvas::~Canvas() = default;
 
-  Widget *Canvas::AddRoot(std::unique_ptr<Widget> Root)
-  {
-    Widget *Result = Root.get();
-    Roots.push_back(std::move(Root));
-    return Result;
-  }
-
   void Canvas::UpdateLayout(SDL_Renderer *Renderer)
   {
     Size FullScreen;
@@ -49,6 +42,10 @@ namespace Engine::UI
   {
     float MouseX = static_cast<float>(Input.GetMouseX());
     float MouseY = static_cast<float>(Input.GetMouseY());
+    float DeltaX = MouseX - LastMouseX;
+    float DeltaY = MouseY - LastMouseY;
+    LastMouseX = MouseX;
+    LastMouseY = MouseY;
 
     // Later roots are drawn on top, so they get first refusal at the hit.
     Widget *HitWidget = nullptr;
@@ -87,13 +84,17 @@ namespace Engine::UI
     if (LeftJustPressed && HitWidget)
     {
       PressedWidget = HitWidget;
-      PressedWidget->OnPointerDown();
+      PressedWidget->OnPointerDown(MouseX, MouseY);
     }
     else if (LeftJustReleased && PressedWidget)
     {
       Widget *Released = PressedWidget;
       PressedWidget = nullptr;
       Released->OnPointerUp(Released == HitWidget);
+    }
+    else if (PressedWidget && (DeltaX != 0.0f || DeltaY != 0.0f))
+    {
+      PressedWidget->OnPointerDrag(MouseX, MouseY, DeltaX, DeltaY);
     }
   }
 

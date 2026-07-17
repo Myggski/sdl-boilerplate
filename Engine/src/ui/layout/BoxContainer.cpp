@@ -26,11 +26,10 @@ namespace Engine::UI
   BoxContainer::BoxContainer() = default;
   BoxContainer::~BoxContainer() = default;
 
-  Widget *BoxContainer::AddSlot(std::unique_ptr<Widget> Content, SizeRule Rule, float FillWeight, Alignment CrossAlignment, float Padding)
+  BoxContainer *BoxContainer::ClearSlots()
   {
-    Widget *Result = Content.get();
-    Slots.push_back(BoxSlot{std::move(Content), Rule, FillWeight, Padding, CrossAlignment});
-    return Result;
+    Slots.clear();
+    return this;
   }
 
   Size BoxContainer::Measure(Size AvailableSize)

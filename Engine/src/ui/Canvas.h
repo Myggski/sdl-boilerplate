@@ -34,8 +34,15 @@ namespace Engine::UI
     Canvas(const Canvas &) = delete;
     Canvas &operator=(const Canvas &) = delete;
 
-    // Takes ownership of Root; returns a non-owning pointer for the caller to keep around.
-    Widget *AddRoot(std::unique_ptr<Widget> Root);
+    // Takes ownership of Root; returns a non-owning pointer of the same concrete type that was
+    // passed in, same reasoning as BoxContainer::AddSlot (see its comment).
+    template <typename T>
+    T *AddRoot(std::unique_ptr<T> Root)
+    {
+      T *Result = Root.get();
+      Roots.push_back(std::move(Root));
+      return Result;
+    }
 
     void UpdateLayout(SDL_Renderer *Renderer);
     void ProcessInput(InputManager &Input);
@@ -44,8 +51,11 @@ namespace Engine::UI
   private:
     std::vector<std::unique_ptr<Widget>> Roots;
 
-    // Persist across frames so ProcessInput can detect enter/leave and press/release transitions.
+    // Persist across frames so ProcessInput can detect enter/leave, press/release, and drag
+    // (mouse-moved-while-held) transitions.
     Widget *HoveredWidget{nullptr};
     Widget *PressedWidget{nullptr};
+    float LastMouseX{0.0f};
+    float LastMouseY{0.0f};
   };
 }

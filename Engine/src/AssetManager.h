@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core.h"
+#include "Texture.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -16,7 +17,7 @@ namespace Engine
     explicit AssetManager(SDL_Renderer *Renderer);
     ~AssetManager();
 
-    SDL_Texture *LoadTexture(const std::string &FilePath);
+    Texture *LoadTexture(const std::string &FilePath);
 
     // Cached by FilePath + PointSize, since a TTF_Font is rasterized at a fixed size; asking for
     // the same file at a different size loads/keeps a second TTF_Font.

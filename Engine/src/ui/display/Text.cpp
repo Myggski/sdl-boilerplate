@@ -1,4 +1,5 @@
 #include "Text.h"
+#include "../SDLConversions.h"
 #include <SDL_ttf.h>
 #include <SDL_render.h>
 
@@ -14,22 +15,25 @@ namespace Engine::UI
     }
   }
 
-  void Text::SetFont(TTF_Font *NewFont)
+  Text *Text::SetFont(TTF_Font *NewFont)
   {
     Font = NewFont;
     Dirty = true;
+    return this;
   }
 
-  void Text::SetText(const std::string &NewText)
+  Text *Text::SetText(const std::string &NewText)
   {
     Content = NewText;
     Dirty = true;
+    return this;
   }
 
-  void Text::SetColor(SDL_Color NewColor)
+  Text *Text::SetColor(Color NewColor)
   {
-    Color = NewColor;
+    TextColor = NewColor;
     Dirty = true;
+    return this;
   }
 
   Size Text::Measure(Size)
@@ -60,7 +64,7 @@ namespace Engine::UI
 
     if (Font && !Content.empty())
     {
-      SDL_Surface *Surface = TTF_RenderUTF8_Blended(Font, Content.c_str(), Color);
+      SDL_Surface *Surface = TTF_RenderUTF8_Blended(Font, Content.c_str(), ToSDLColor(TextColor));
       if (Surface)
       {
         Texture = SDL_CreateTextureFromSurface(Renderer, Surface);

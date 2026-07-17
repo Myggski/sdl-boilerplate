@@ -4,17 +4,19 @@
 namespace Engine::UI
 {
   Panel::Panel() = default;
-  Panel::Panel(SDL_Color Color) : Color(Color) {}
+  Panel::Panel(Color PanelColor) : PanelColor(PanelColor) {}
   Panel::~Panel() = default;
 
-  void Panel::SetColor(SDL_Color NewColor)
+  Panel *Panel::SetColor(Color NewColor)
   {
-    Color = NewColor;
+    PanelColor = NewColor;
+    return this;
   }
 
-  void Panel::SetDesiredSize(Size NewSize)
+  Panel *Panel::SetDesiredSize(Size NewSize)
   {
     DesiredSize = NewSize;
+    return this;
   }
 
   Size Panel::Measure(Size)
@@ -41,7 +43,7 @@ namespace Engine::UI
     SDL_GetRenderDrawBlendMode(Renderer, &PreviousBlendMode);
     SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
 
-    SDL_SetRenderDrawColor(Renderer, Color.r, Color.g, Color.b, Color.a);
+    SDL_SetRenderDrawColor(Renderer, PanelColor.R, PanelColor.G, PanelColor.B, PanelColor.A);
     SDL_RenderFillRect(Renderer, &DestRect);
 
     SDL_SetRenderDrawBlendMode(Renderer, PreviousBlendMode);

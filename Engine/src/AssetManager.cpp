@@ -31,13 +31,13 @@ namespace Engine
     }
   }
 
-  SDL_Texture *AssetManager::LoadTexture(const std::string &FilePath)
+  Texture *AssetManager::LoadTexture(const std::string &FilePath)
   {
     // Check if the texture is already loaded
     auto AssetIterator = Assets.find(FilePath);
     if (AssetIterator != Assets.end())
     {
-      return AssetIterator->second.get();
+      return reinterpret_cast<Texture *>(AssetIterator->second.get());
     }
 
     // Load texture using SDL_image
@@ -50,7 +50,7 @@ namespace Engine
 
     // Store in the cache
     Assets[FilePath] = std::unique_ptr<SDL_Texture, SDL_TextureDeleter>(LoadedTexture);
-    return LoadedTexture;
+    return reinterpret_cast<Texture *>(LoadedTexture);
   }
 
   TTF_Font *AssetManager::LoadFont(const std::string &FilePath, int PointSize)

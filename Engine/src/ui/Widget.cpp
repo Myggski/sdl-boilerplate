@@ -34,6 +34,7 @@ namespace Engine::UI
 
   void Widget::OnPointerEnter() {}
   void Widget::OnPointerLeave() {}
-  void Widget::OnPointerDown() {}
+  void Widget::OnPointerDown(float, float) {}
   void Widget::OnPointerUp(bool) {}
+  void Widget::OnPointerDrag(float, float, float, float) {}
 }

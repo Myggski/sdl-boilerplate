@@ -1,0 +1,14 @@
+* text=auto
+
+*.cpp text
+*.h text
+*.cmake text
+CMakeLists.txt text
+*.json text
+*.md text
+*.ini text
+*.txt text
+.gitignore text
+
+*.png binary
+*.ttf binary

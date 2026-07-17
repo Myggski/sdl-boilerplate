@@ -11,6 +11,24 @@ namespace Engine
     Position.y += DeltaY;
   }
 
+  void Camera::DrawSprite(Texture *InTexture, Rect SourceRect, Rect DestRect, float RotationDegrees)
+  {
+    SDL_Rect Source{
+        static_cast<int>(SourceRect.X),
+        static_cast<int>(SourceRect.Y),
+        static_cast<int>(SourceRect.Width),
+        static_cast<int>(SourceRect.Height)};
+
+    SDL_Rect Dest{
+        static_cast<int>(DestRect.X),
+        static_cast<int>(DestRect.Y),
+        static_cast<int>(DestRect.Width),
+        static_cast<int>(DestRect.Height)};
+
+    SDL_RenderCopyEx(Renderer, reinterpret_cast<SDL_Texture *>(InTexture), &Source, &Dest,
+                      static_cast<double>(RotationDegrees), nullptr, SDL_FLIP_NONE);
+  }
+
   void Camera::SetZoom(uint8_t NewZoom)
   {
     // Clamp zoom between 1x (minimum) and 12x (maximum)

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Core.h"
-#include "Widget.h"
-#include <SDL_pixels.h>
+#include "../Widget.h"
+#include "../Theme.h"
 
 namespace Engine::UI
 {
@@ -13,19 +13,19 @@ namespace Engine::UI
   {
   public:
     Panel();
-    explicit Panel(SDL_Color Color);
+    explicit Panel(Color PanelColor);
     ~Panel() override;
 
-    void SetColor(SDL_Color NewColor);
+    Panel *SetColor(Color NewColor);
 
     // {0,0} (the default) means "no intrinsic size, take whatever a Fill slot gives you."
-    void SetDesiredSize(Size NewSize);
+    Panel *SetDesiredSize(Size NewSize);
 
     Size Measure(Size AvailableSize) override;
     void Render(SDL_Renderer *Renderer) override;
 
   private:
-    SDL_Color Color{255, 255, 255, 255};
+    Color PanelColor = Theme::Surface;
     Size DesiredSize{};
   };
 }

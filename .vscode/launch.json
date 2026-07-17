@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "C++ Clang Debug (x64)",
-      "type": "lldb",
+      "type": "cppvsdbg",
       "request": "launch",
       "program": "${workspaceFolder}\\build\\x64-debug\\${workspaceFolderBasename}.exe",
       "args": [],
@@ -12,7 +12,7 @@
     },
     {
       "name": "C++ Clang Release (x64)",
-      "type": "lldb",
+      "type": "cppvsdbg",
       "request": "launch",
       "program": "${workspaceFolder}\\build\\x64-release\\${workspaceFolderBasename}.exe",
       "args": [],

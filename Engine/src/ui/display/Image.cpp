@@ -6,19 +6,22 @@ namespace Engine::UI
   Image::Image() = default;
   Image::~Image() = default;
 
-  void Image::SetTexture(SDL_Texture *NewTexture)
+  Image *Image::SetTexture(Texture *NewTexture)
   {
-    Texture = NewTexture;
+    TextureHandle = reinterpret_cast<SDL_Texture *>(NewTexture);
+    return this;
   }
 
-  void Image::SetSourceRect(Rect NewSourceRect)
+  Image *Image::SetSourceRect(Rect NewSourceRect)
   {
     SourceRect = NewSourceRect;
+    return this;
   }
 
-  void Image::SetDesiredSize(Size NewSize)
+  Image *Image::SetDesiredSize(Size NewSize)
   {
     DesiredSize = NewSize;
+    return this;
   }
 
   Size Image::Measure(Size)
@@ -33,20 +36,20 @@ namespace Engine::UI
       return Size{SourceRect.Width, SourceRect.Height};
     }
 
-    if (!Texture)
+    if (!TextureHandle)
     {
       return Size{};
     }
 
     int TextureWidth = 0;
     int TextureHeight = 0;
-    SDL_QueryTexture(Texture, nullptr, nullptr, &TextureWidth, &TextureHeight);
+    SDL_QueryTexture(TextureHandle, nullptr, nullptr, &TextureWidth, &TextureHeight);
     return Size{static_cast<float>(TextureWidth), static_cast<float>(TextureHeight)};
   }
 
   void Image::Render(SDL_Renderer *Renderer)
   {
-    if (!Visible || !Texture)
+    if (!Visible || !TextureHandle)
     {
       return;
     }
@@ -64,11 +67,11 @@ namespace Engine::UI
           static_cast<int>(SourceRect.Y),
           static_cast<int>(SourceRect.Width),
           static_cast<int>(SourceRect.Height)};
-      SDL_RenderCopy(Renderer, Texture, &SrcRect, &DestRect);
+      SDL_RenderCopy(Renderer, TextureHandle, &SrcRect, &DestRect);
     }
     else
     {
-      SDL_RenderCopy(Renderer, Texture, nullptr, &DestRect);
+      SDL_RenderCopy(Renderer, TextureHandle, nullptr, &DestRect);
     }
   }
 }

@@ -10,40 +10,46 @@ namespace Engine::UI
 
   Button::~Button() = default;
 
-  Widget *Button::SetContent(std::unique_ptr<Widget> NewContent)
-  {
-    Widget *Result = NewContent.get();
-    Content = std::move(NewContent);
-    return Result;
-  }
-
-  void Button::SetColors(SDL_Color Normal, SDL_Color Hovered, SDL_Color Pressed)
+  Button *Button::SetColors(Color Normal, Color Hovered, Color Pressed)
   {
     NormalColor = Normal;
     HoveredColor = Hovered;
     PressedColor = Pressed;
+    return this;
   }
 
-  void Button::SetDesiredSize(Size NewSize)
+  Button *Button::SetDesiredSize(Size NewSize)
   {
     DesiredSize = NewSize;
+    return this;
   }
 
-  void Button::SetBackgroundImage(SDL_Texture *Texture)
+  Button *Button::SetBackgroundImage(Texture *NewTexture)
   {
-    BackgroundImage = Texture;
+    BackgroundImage = reinterpret_cast<SDL_Texture *>(NewTexture);
+    return this;
   }
 
-  void Button::SetBackgroundImageSourceRect(Rect NewSourceRect)
+  Button *Button::SetBackgroundImageSourceRect(Rect NewSourceRect)
   {
     BackgroundImageSourceRect = NewSourceRect;
+    return this;
+  }
+
+  Button *Button::SetContentPadding(Padding NewPadding)
+  {
+    ContentPadding = NewPadding;
+    return this;
   }
 
   Size Button::Measure(Size AvailableSize)
   {
     if (Content)
     {
-      return Content->Measure(AvailableSize);
+      Size ContentSize = Content->Measure(AvailableSize);
+      return Size{
+          ContentSize.Width + ContentPadding.Left + ContentPadding.Right,
+          ContentSize.Height + ContentPadding.Top + ContentPadding.Bottom};
     }
     return DesiredSize;
   }
@@ -53,7 +59,12 @@ namespace Engine::UI
     ComputedRect = FinalRect;
     if (Content)
     {
-      Content->Arrange(FinalRect);
+      Rect InsetRect{
+          FinalRect.X + ContentPadding.Left,
+          FinalRect.Y + ContentPadding.Top,
+          FinalRect.Width - ContentPadding.Left - ContentPadding.Right,
+          FinalRect.Height - ContentPadding.Top - ContentPadding.Bottom};
+      Content->Arrange(InsetRect);
     }
   }
 
@@ -96,13 +107,13 @@ namespace Engine::UI
     }
     else
     {
-      SDL_Color Current = IsPressedDown ? PressedColor : (IsHovered ? HoveredColor : NormalColor);
+      Color Current = IsPressedDown ? PressedColor : (IsHovered ? HoveredColor : NormalColor);
 
       SDL_BlendMode PreviousBlendMode;
       SDL_GetRenderDrawBlendMode(Renderer, &PreviousBlendMode);
       SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
 
-      SDL_SetRenderDrawColor(Renderer, Current.r, Current.g, Current.b, Current.a);
+      SDL_SetRenderDrawColor(Renderer, Current.R, Current.G, Current.B, Current.A);
       SDL_RenderFillRect(Renderer, &DestRect);
 
       SDL_SetRenderDrawBlendMode(Renderer, PreviousBlendMode);
@@ -125,7 +136,7 @@ namespace Engine::UI
     IsPressedDown = false;
   }
 
-  void Button::OnPointerDown()
+  void Button::OnPointerDown(float, float)
   {
     IsPressedDown = true;
     Pressed.Broadcast();
