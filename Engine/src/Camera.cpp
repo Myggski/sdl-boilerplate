@@ -13,20 +13,20 @@ namespace Engine
 
   void Camera::DrawSprite(Texture *InTexture, Rect SourceRect, Rect DestRect, float RotationDegrees)
   {
-    SDL_Rect Source{
-        static_cast<int>(SourceRect.X),
-        static_cast<int>(SourceRect.Y),
-        static_cast<int>(SourceRect.Width),
-        static_cast<int>(SourceRect.Height)};
+    SDL_FRect Source{
+        SourceRect.X,
+        SourceRect.Y,
+        SourceRect.Width,
+        SourceRect.Height};
 
-    SDL_Rect Dest{
-        static_cast<int>(DestRect.X),
-        static_cast<int>(DestRect.Y),
-        static_cast<int>(DestRect.Width),
-        static_cast<int>(DestRect.Height)};
+    SDL_FRect Dest{
+        DestRect.X,
+        DestRect.Y,
+        DestRect.Width,
+        DestRect.Height};
 
-    SDL_RenderCopyEx(Renderer, reinterpret_cast<SDL_Texture *>(InTexture), &Source, &Dest,
-                      static_cast<double>(RotationDegrees), nullptr, SDL_FLIP_NONE);
+    SDL_RenderTextureRotated(Renderer, reinterpret_cast<SDL_Texture *>(InTexture), &Source, &Dest,
+                              static_cast<double>(RotationDegrees), nullptr, SDL_FLIP_NONE);
   }
 
   void Camera::SetZoom(uint8_t NewZoom)
@@ -57,7 +57,7 @@ namespace Engine
     // Define and set the viewport based on the camera's position
     SDL_Rect Viewport{static_cast<int>(Position.x), static_cast<int>(Position.y),
                       static_cast<int>(ScreenWidth), static_cast<int>(ScreenHeight)};
-    SDL_RenderSetViewport(Renderer, &Viewport);
+    SDL_SetRenderViewport(Renderer, &Viewport);
   }
 
   void Camera::PostRender()
@@ -69,17 +69,17 @@ namespace Engine
   void Camera::Reset()
   {
     ResetScale();
-    SDL_RenderSetViewport(Renderer, nullptr);
+    SDL_SetRenderViewport(Renderer, nullptr);
   }
 
   void Camera::ResetScale()
   {
-    SDL_RenderSetScale(Renderer, 1.0f, 1.0f);
+    SDL_SetRenderScale(Renderer, 1.0f, 1.0f);
   }
 
   void Camera::SetZoomScale()
   {
     // Apply the camera's transformations (scale and position)
-    SDL_RenderSetScale(Renderer, Zoom, Zoom);
+    SDL_SetRenderScale(Renderer, Zoom, Zoom);
   }
 }

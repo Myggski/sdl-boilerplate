@@ -2,7 +2,7 @@
 
 #include "Core.h"
 #include "GameEvent.h"
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 #include <unordered_map>
 #include <functional>
 

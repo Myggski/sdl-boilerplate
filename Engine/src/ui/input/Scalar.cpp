@@ -1,7 +1,7 @@
 #include "Scalar.h"
 #include "../display/Text.h"
 #include "../../AssetManager.h"
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 #include <cstdio>
 #include <cmath>
 
@@ -145,11 +145,11 @@ namespace Engine::UI
 
     Color Current = IsPressedDown ? PressedColor : (IsHovered ? HoveredColor : NormalColor);
 
-    SDL_Rect DestRect{
-        static_cast<int>(ComputedRect.X),
-        static_cast<int>(ComputedRect.Y),
-        static_cast<int>(ComputedRect.Width),
-        static_cast<int>(ComputedRect.Height)};
+    SDL_FRect DestRect{
+        ComputedRect.X,
+        ComputedRect.Y,
+        ComputedRect.Width,
+        ComputedRect.Height};
 
     SDL_BlendMode PreviousBlendMode;
     SDL_GetRenderDrawBlendMode(Renderer, &PreviousBlendMode);
@@ -163,10 +163,10 @@ namespace Engine::UI
       float Fraction = (Value - MinValue) / (MaxValue - MinValue);
       Fraction = Fraction < 0.0f ? 0.0f : (Fraction > 1.0f ? 1.0f : Fraction);
 
-      SDL_Rect FillRect{
+      SDL_FRect FillRect{
           DestRect.x,
           DestRect.y,
-          static_cast<int>(DestRect.w * Fraction),
+          DestRect.w * Fraction,
           DestRect.h};
 
       SDL_SetRenderDrawColor(Renderer, FillColor.R, FillColor.G, FillColor.B, FillColor.A);

@@ -1,8 +1,8 @@
 #include "GameEngine.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdexcept>
 #include <chrono>
-#include <SDL_image.h>
+#include <SDL3_image/SDL_image.h>
 
 namespace Engine
 {
@@ -18,13 +18,14 @@ namespace Engine
 
   bool GameEngine::Initialize()
   {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0)
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
     {
       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
       return false;
     }
 
-    Window = SDL_CreateWindow("SDL2 Boilerplate", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1920, 1080, SDL_WINDOW_SHOWN);
+    // Windows are shown by default now (no more SDL_WINDOW_SHOWN flag, no x/y position args).
+    Window = SDL_CreateWindow("SDL3 Boilerplate", 1920, 1080, 0);
     if (!Window)
     {
       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -33,16 +34,18 @@ namespace Engine
 
     SDL_RaiseWindow(Window);
 
-    Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    // No more index/flags params; vsync (was SDL_RENDERER_PRESENTVSYNC) is now a separate call.
+    Renderer = SDL_CreateRenderer(Window, nullptr);
     if (Renderer == nullptr)
     {
       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
       return false;
     }
+    SDL_SetRenderVSync(Renderer, 1);
 
     Context = std::make_unique<EngineContext>(Window, Renderer);
 
-    SDLQuitEventId = Context->Dispatcher.RegisterEventListener(SDL_QUIT, [&](const SDL_Event &Event)
+    SDLQuitEventId = Context->Dispatcher.RegisterEventListener(SDL_EVENT_QUIT, [&](const SDL_Event &Event)
                                                                 { Shutdown(); });
 
     IsGameRunning = true;
@@ -114,8 +117,10 @@ namespace Engine
       }
 
       // UI (and the debug overlay below) render in real screen pixels, not the pixel-art zoom
-      // scale the game world just rendered at.
-      MainCamera.ResetScale();
+      // scale/viewport the game world just rendered at. Reset(), not just ResetScale(): PreRender
+      // also set a small viewport (ScreenWidth x ScreenHeight) for the game world, and leaving
+      // that active would clip UI rendering to that same small region.
+      MainCamera.Reset();
       Context->UICanvas.Render(Renderer);
       Context->Overlay.EndFrame(Renderer, MainCamera);
 
@@ -145,7 +150,7 @@ namespace Engine
   {
     if (Context)
     {
-      Context->Dispatcher.RemoveEventListener(SDL_QUIT, SDLQuitEventId);
+      Context->Dispatcher.RemoveEventListener(SDL_EVENT_QUIT, SDLQuitEventId);
     }
 
     // Destroy Assets/Input/Camera/Overlay/Dispatcher while the renderer and window are still

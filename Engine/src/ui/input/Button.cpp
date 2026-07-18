@@ -1,5 +1,5 @@
 #include "Button.h"
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 
 namespace Engine::UI
 {
@@ -75,11 +75,11 @@ namespace Engine::UI
       return;
     }
 
-    SDL_Rect DestRect{
-        static_cast<int>(ComputedRect.X),
-        static_cast<int>(ComputedRect.Y),
-        static_cast<int>(ComputedRect.Width),
-        static_cast<int>(ComputedRect.Height)};
+    SDL_FRect DestRect{
+        ComputedRect.X,
+        ComputedRect.Y,
+        ComputedRect.Width,
+        ComputedRect.Height};
 
     if (BackgroundImage)
     {
@@ -91,16 +91,16 @@ namespace Engine::UI
 
       if (BackgroundImageSourceRect.Width > 0.0f && BackgroundImageSourceRect.Height > 0.0f)
       {
-        SDL_Rect SrcRect{
-            static_cast<int>(BackgroundImageSourceRect.X),
-            static_cast<int>(BackgroundImageSourceRect.Y),
-            static_cast<int>(BackgroundImageSourceRect.Width),
-            static_cast<int>(BackgroundImageSourceRect.Height)};
-        SDL_RenderCopy(Renderer, BackgroundImage, &SrcRect, &DestRect);
+        SDL_FRect SrcRect{
+            BackgroundImageSourceRect.X,
+            BackgroundImageSourceRect.Y,
+            BackgroundImageSourceRect.Width,
+            BackgroundImageSourceRect.Height};
+        SDL_RenderTexture(Renderer, BackgroundImage, &SrcRect, &DestRect);
       }
       else
       {
-        SDL_RenderCopy(Renderer, BackgroundImage, nullptr, &DestRect);
+        SDL_RenderTexture(Renderer, BackgroundImage, nullptr, &DestRect);
       }
 
       SDL_SetTextureColorMod(BackgroundImage, PreviousR, PreviousG, PreviousB);

@@ -1,8 +1,8 @@
 #include "Canvas.h"
 #include "../InputManager.h"
-#include <SDL_render.h>
-#include <SDL_mouse.h>
-#include <SDL_keyboard.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_keyboard.h>
 
 namespace Engine::UI
 {
@@ -12,7 +12,7 @@ namespace Engine::UI
     {
       int ScreenWidth = 0;
       int ScreenHeight = 0;
-      SDL_GetRendererOutputSize(Renderer, &ScreenWidth, &ScreenHeight);
+      SDL_GetCurrentRenderOutputSize(Renderer, &ScreenWidth, &ScreenHeight);
 
       OutSize = Size{static_cast<float>(ScreenWidth), static_cast<float>(ScreenHeight)};
       return Rect{0.0f, 0.0f, OutSize.Width, OutSize.Height};

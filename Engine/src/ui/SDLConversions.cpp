@@ -1,5 +1,5 @@
 #include "SDLConversions.h"
-#include <SDL_pixels.h>
+#include <SDL3/SDL_pixels.h>
 
 namespace Engine::UI
 {

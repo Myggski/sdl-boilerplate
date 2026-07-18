@@ -2,7 +2,7 @@
 
 #include <functional>
 #include <unordered_map>
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 #include "SDLEventDispatcher.h"
 
 namespace Engine

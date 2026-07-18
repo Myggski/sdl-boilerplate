@@ -1,12 +1,12 @@
 #include "TextInput.h"
 #include "../SDLConversions.h"
 #include "../../AssetManager.h"
-#include <SDL_ttf.h>
-#include <SDL_render.h>
-#include <SDL_timer.h>
-#include <SDL_clipboard.h>
-#include <SDL_stdinc.h>
-#include <SDL_keycode.h>
+#include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_keycode.h>
 #include <algorithm>
 #include <cmath>
 
@@ -52,7 +52,7 @@ namespace Engine::UI
       std::string Prefix = Text.substr(0, ByteOffsetForCodepoint(Text, CodepointIndex));
       int Width = 0;
       int Height = 0;
-      TTF_SizeUTF8(Font, Prefix.c_str(), &Width, &Height);
+      TTF_GetStringSize(Font, Prefix.c_str(), Prefix.size(), &Width, &Height);
       return static_cast<float>(Width);
     }
   }
@@ -216,11 +216,11 @@ namespace Engine::UI
 
     if (Font && !Content.empty())
     {
-      SDL_Surface *Surface = TTF_RenderUTF8_Blended(Font, Content.c_str(), ToSDLColor(EffectiveColor));
+      SDL_Surface *Surface = TTF_RenderText_Blended(Font, Content.c_str(), Content.size(), ToSDLColor(EffectiveColor));
       if (Surface)
       {
         DisplayTexture = SDL_CreateTextureFromSurface(Renderer, Surface);
-        SDL_FreeSurface(Surface);
+        SDL_DestroySurface(Surface);
       }
     }
 
@@ -236,11 +236,11 @@ namespace Engine::UI
 
     Color BackgroundColor = IsFocused ? FocusedColor : (IsHovered ? HoveredColor : NormalColor);
 
-    SDL_Rect DestRect{
-        static_cast<int>(ComputedRect.X),
-        static_cast<int>(ComputedRect.Y),
-        static_cast<int>(ComputedRect.Width),
-        static_cast<int>(ComputedRect.Height)};
+    SDL_FRect DestRect{
+        ComputedRect.X,
+        ComputedRect.Y,
+        ComputedRect.Width,
+        ComputedRect.Height};
 
     SDL_BlendMode PreviousBlendMode;
     SDL_GetRenderDrawBlendMode(Renderer, &PreviousBlendMode);
@@ -252,19 +252,26 @@ namespace Engine::UI
     if (MaxLength > 0 && CodepointCount(Text) >= MaxLength)
     {
       SDL_SetRenderDrawColor(Renderer, FullBorderColor.R, FullBorderColor.G, FullBorderColor.B, FullBorderColor.A);
-      SDL_RenderDrawRect(Renderer, &DestRect);
+      SDL_RenderRect(Renderer, &DestRect);
     }
 
     // Selection highlight/text/cursor can all measure wider than the box (a long pasted string,
     // a narrow field); clip to DestRect so they're cropped at the edges instead of drawing over
-    // whatever's next to this widget.
+    // whatever's next to this widget. Render's own clip-rect calls stay SDL_Rect (int), unlike
+    // the SDL_FRect fill/draw/texture calls above, SDL3 never moved clipping to float precision.
+    SDL_Rect ClipRect{
+        static_cast<int>(ComputedRect.X),
+        static_cast<int>(ComputedRect.Y),
+        static_cast<int>(ComputedRect.Width),
+        static_cast<int>(ComputedRect.Height)};
+
     SDL_Rect PreviousClipRect;
-    bool HadClip = SDL_RenderIsClipEnabled(Renderer) == SDL_TRUE;
+    bool HadClip = SDL_RenderClipEnabled(Renderer);
     if (HadClip)
     {
-      SDL_RenderGetClipRect(Renderer, &PreviousClipRect);
+      SDL_GetRenderClipRect(Renderer, &PreviousClipRect);
     }
-    SDL_RenderSetClipRect(Renderer, &DestRect);
+    SDL_SetRenderClipRect(Renderer, &ClipRect);
 
     UpdateScrollOffset();
     float TextX = ComputedRect.X + TextPadding - ScrollOffsetPixels;
@@ -280,11 +287,11 @@ namespace Engine::UI
       float StartX = TextX + PixelOffsetForCodepoint(Font, Text, Start);
       float EndX = TextX + PixelOffsetForCodepoint(Font, Text, End);
 
-      SDL_Rect HighlightRect{
-          static_cast<int>(StartX),
-          static_cast<int>(ComputedRect.Y),
-          static_cast<int>(EndX - StartX),
-          static_cast<int>(ComputedRect.Height)};
+      SDL_FRect HighlightRect{
+          StartX,
+          ComputedRect.Y,
+          EndX - StartX,
+          ComputedRect.Height};
 
       SDL_SetRenderDrawColor(Renderer, SelectionColor.R, SelectionColor.G, SelectionColor.B, SelectionColor.A);
       SDL_RenderFillRect(Renderer, &HighlightRect);
@@ -294,17 +301,17 @@ namespace Engine::UI
 
     if (DisplayTexture)
     {
-      int TextureWidth = 0;
-      int TextureHeight = 0;
-      SDL_QueryTexture(DisplayTexture, nullptr, nullptr, &TextureWidth, &TextureHeight);
+      float TextureWidth = 0.0f;
+      float TextureHeight = 0.0f;
+      SDL_GetTextureSize(DisplayTexture, &TextureWidth, &TextureHeight);
 
-      SDL_Rect TextRect{
-          static_cast<int>(TextX),
-          static_cast<int>(ComputedRect.Y + (ComputedRect.Height - TextureHeight) * 0.5f),
+      SDL_FRect TextRect{
+          TextX,
+          ComputedRect.Y + (ComputedRect.Height - TextureHeight) * 0.5f,
           TextureWidth,
           TextureHeight};
 
-      SDL_RenderCopy(Renderer, DisplayTexture, nullptr, &TextRect);
+      SDL_RenderTexture(Renderer, DisplayTexture, nullptr, &TextRect);
     }
 
     // Blinks at a fixed rate rather than tracking time-since-focus, so it doesn't need a new
@@ -315,19 +322,19 @@ namespace Engine::UI
     if (IsFocused && !HasSelection() && Font && BlinkPhaseOn)
     {
       float CursorX = TextX + PixelOffsetForCodepoint(Font, Text, CursorPosition);
-      int FontHeight = TTF_FontHeight(Font);
+      int FontHeight = TTF_GetFontHeight(Font);
 
-      SDL_Rect CursorRect{
-          static_cast<int>(CursorX),
-          static_cast<int>(ComputedRect.Y + (ComputedRect.Height - FontHeight) * 0.5f),
-          2,
-          FontHeight};
+      SDL_FRect CursorRect{
+          CursorX,
+          ComputedRect.Y + (ComputedRect.Height - FontHeight) * 0.5f,
+          2.0f,
+          static_cast<float>(FontHeight)};
 
       SDL_SetRenderDrawColor(Renderer, TextColor.R, TextColor.G, TextColor.B, TextColor.A);
       SDL_RenderFillRect(Renderer, &CursorRect);
     }
 
-    SDL_RenderSetClipRect(Renderer, HadClip ? &PreviousClipRect : nullptr);
+    SDL_SetRenderClipRect(Renderer, HadClip ? &PreviousClipRect : nullptr);
     SDL_SetRenderDrawBlendMode(Renderer, PreviousBlendMode);
   }
 
@@ -457,8 +464,8 @@ namespace Engine::UI
 
   void TextInput::OnKeyDown(SDL_Scancode PressedKey, SDL_Keymod Modifiers)
   {
-    bool ShiftHeld = (Modifiers & KMOD_SHIFT) != 0;
-    bool CtrlHeld = (Modifiers & KMOD_CTRL) != 0;
+    bool ShiftHeld = (Modifiers & SDL_KMOD_SHIFT) != 0;
+    bool CtrlHeld = (Modifiers & SDL_KMOD_CTRL) != 0;
 
     switch (PressedKey)
     {

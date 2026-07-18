@@ -2,11 +2,11 @@
 
 #ifdef ENGINE_WITH_DEBUG_UI
 #include "imgui.h"
-#include "backends/imgui_impl_sdl2.h"
-#include "backends/imgui_impl_sdlrenderer2.h"
+#include "backends/imgui_impl_sdl3.h"
+#include "backends/imgui_impl_sdlrenderer3.h"
 #include "sdl/SDLEventDispatcher.h"
 #include "Camera.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #endif
 
 namespace Engine
@@ -24,26 +24,26 @@ namespace Engine
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
     SDLEventHandle = Dispatcher.GetSDLEvent().Add([](const SDL_Event &Event)
-                                                   { ImGui_ImplSDL2_ProcessEvent(&Event); });
+                                                   { ImGui_ImplSDL3_ProcessEvent(&Event); });
 
     ImGui::StyleColorsDark();
-    ImGui_ImplSDL2_InitForSDLRenderer(Window, Renderer);
-    ImGui_ImplSDLRenderer2_Init(Renderer);
+    ImGui_ImplSDL3_InitForSDLRenderer(Window, Renderer);
+    ImGui_ImplSDLRenderer3_Init(Renderer);
   }
 
   DebugOverlay::~DebugOverlay()
   {
     Dispatcher.GetSDLEvent().Remove(SDLEventHandle);
 
-    ImGui_ImplSDLRenderer2_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
   }
 
   void DebugOverlay::BeginFrame()
   {
-    ImGui_ImplSDLRenderer2_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
+    ImGui_ImplSDLRenderer3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
   }
 
@@ -51,9 +51,11 @@ namespace Engine
   {
     ImGui::Render();
 
-    // ImGui draws in screen pixels; the camera's pixel-art zoom scale must not apply to it.
-    MainCamera.ResetScale();
-    ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), Renderer);
+    // ImGui draws in screen pixels; the camera's pixel-art zoom scale/viewport must not apply to
+    // it. Reset(), not just ResetScale(): PreRender's small game-world viewport would otherwise
+    // clip ImGui's draw calls to that same small region.
+    MainCamera.Reset();
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), Renderer);
     MainCamera.SetZoomScale();
   }
 

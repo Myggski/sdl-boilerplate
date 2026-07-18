@@ -11,9 +11,9 @@ namespace Engine
   {
     Assets.reserve(256);
 
-    if (TTF_Init() < 0)
+    if (!TTF_Init())
     {
-      SDL_Log("Failed to initialize SDL_ttf: %s", TTF_GetError());
+      SDL_Log("Failed to initialize SDL_ttf: %s", SDL_GetError());
     }
     else
     {
@@ -48,6 +48,11 @@ namespace Engine
       return nullptr;
     }
 
+    // SDL3 defaults new textures to linear (bilinear) filtering, SDL2 defaulted to nearest.
+    // Camera zooms sprites up several times over for this engine's pixel-art look, so linear
+    // filtering blurs them, nearest keeps the crisp blocky-pixel edges the zoom is meant to show.
+    SDL_SetTextureScaleMode(LoadedTexture, SDL_SCALEMODE_NEAREST);
+
     // Store in the cache
     Assets[FilePath] = std::unique_ptr<SDL_Texture, SDL_TextureDeleter>(LoadedTexture);
     return reinterpret_cast<Texture *>(LoadedTexture);
@@ -66,7 +71,7 @@ namespace Engine
     TTF_Font *LoadedFont = TTF_OpenFont(FilePath.c_str(), PointSize);
     if (!LoadedFont)
     {
-      SDL_Log("Failed to load font '%s' at size %d: %s", FilePath.c_str(), PointSize, TTF_GetError());
+      SDL_Log("Failed to load font '%s' at size %d: %s", FilePath.c_str(), PointSize, SDL_GetError());
       return nullptr;
     }
 

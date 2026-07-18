@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(sdl-boilerplate-engine)
 
-# SDL2 / SDL2_image / SDL2_ttf are fetched automatically (see cmake/Dependencies.cmake)
+# SDL3 / SDL3_image / SDL3_ttf are fetched automatically (see cmake/Dependencies.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/Dependencies.cmake)
 
 # Engine-owned assets (currently just the default UI font, see AssetManager::LoadDefaultFont).
@@ -31,7 +31,7 @@ set(ENGINE_HEADERS
 
 # Dear ImGui debug overlay (see Engine/src/DebugOverlay.h), Debug builds only. Not fetched via
 # FetchContent since ImGui has no official CMake package; expected under CMAKE_PREFIX_PATH like
-# SDL2 used to be. Compiled into the Engine DLL rather than the Game exe so a future Editor
+# SDL3 used to be. Compiled into the Engine DLL rather than the Game exe so a future Editor
 # target can share the exact same compiled ImGui (ImGui keeps process-wide global state, so it
 # can only safely exist as one compiled copy shared across the DLL boundary, see
 # WINDOWS_EXPORT_ALL_SYMBOLS below).
@@ -40,8 +40,8 @@ set(IMGUI_DIR "${CMAKE_SDK_PATH}/imgui")
 
 file(GLOB IMGUI_SOURCES
     "${IMGUI_DIR}/*.cpp"
-    "${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp"
-    "${IMGUI_DIR}/backends/imgui_impl_sdlrenderer2.cpp"
+    "${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp"
+    "${IMGUI_DIR}/backends/imgui_impl_sdlrenderer3.cpp"
 )
 
 # Create the shared library
@@ -93,18 +93,18 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
-    SDL2::SDL2
-    SDL2_image::SDL2_image
-    SDL2_ttf::SDL2_ttf
+    SDL3::SDL3
+    SDL3_image::SDL3_image
+    SDL3_ttf::SDL3_ttf
 )
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC PrecompiledHeader.h)
 
 # List of DLLs to copy next to the built executable
 set(DLLS_TO_COPY
-    $<TARGET_FILE:SDL2::SDL2>
-    $<TARGET_FILE:SDL2_image::SDL2_image>
-    $<TARGET_FILE:SDL2_ttf::SDL2_ttf>
+    $<TARGET_FILE:SDL3::SDL3>
+    $<TARGET_FILE:SDL3_image::SDL3_image>
+    $<TARGET_FILE:SDL3_ttf::SDL3_ttf>
 )
 
 # Copy each DLL using a loop

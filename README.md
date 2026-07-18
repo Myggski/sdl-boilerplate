@@ -7,8 +7,9 @@ Engine/Game split: `Engine/` is the reusable library (DLL), `Game/` is where you
 
 ## Build & run
 
-Requires LLVM/Clang + Ninja on `PATH`, and Dear ImGui sources under `%CMAKE_PREFIX_PATH%/imgui`
-(e.g. `C:\Code\sdks\imgui`), the only manual dependency. SDL2/SDL2_image/SDL2_ttf are fetched and
+Requires LLVM/Clang + Ninja on `PATH`, and Dear ImGui sources (including the SDL3 backends,
+`imgui_impl_sdl3.*`/`imgui_impl_sdlrenderer3.*`) under `%CMAKE_PREFIX_PATH%/imgui`
+(e.g. `C:\Code\sdks\imgui`), the only manual dependency. SDL3/SDL3_image/SDL3_ttf are fetched and
 built automatically via `cmake/Dependencies.cmake`.
 
 ```
@@ -54,7 +55,7 @@ Game/
     CollisionSettings.h   Collision layers + CollisionMatrix, header-only (see Engine/src/ecs/CollisionMatrix.h)
   assets/            Game content
 
-cmake/Dependencies.cmake   FetchContent for SDL2/SDL2_image/SDL2_ttf
+cmake/Dependencies.cmake   FetchContent for SDL3/SDL3_image/SDL3_ttf
 CMakePresets.json           x64-debug/x64-release/x64-debug-msvc
 ```
 

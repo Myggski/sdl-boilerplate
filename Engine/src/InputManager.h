@@ -3,9 +3,11 @@
 #include "Core.h"
 #include "PrecompiledHeader.h"
 #include "sdl/SDLEventHandler.h"
-#include <SDL_events.h>
-#include <SDL_scancode.h>
-#include <SDL_gamecontroller.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_scancode.h>
+#include <SDL3/SDL_gamepad.h>
+
+struct SDL_Window;
 
 namespace Engine
 {
@@ -24,7 +26,7 @@ namespace Engine
   class ENGINE_API InputManager
   {
   public:
-    explicit InputManager(SDLEventDispatcher &Dispatcher);
+    InputManager(SDLEventDispatcher &Dispatcher, SDL_Window *Window);
     ~InputManager();
 
     InputManager(const InputManager &) = delete;
@@ -58,7 +60,7 @@ namespace Engine
 
     // Fires with the SDL_JoystickID of the gamepad that was just connected/disconnected. That id
     // stays stable for the life of the connection, unlike the transient device index SDL's own
-    // SDL_CONTROLLERDEVICEADDED event carries, so it's safe to use as a key to track a specific
+    // SDL_EVENT_GAMEPAD_ADDED event carries, so it's safe to use as a key to track a specific
     // gamepad across both events.
     GameEvent<SDL_JoystickID> &OnGamepadConnected() { return GamepadConnected; }
     GameEvent<SDL_JoystickID> &OnGamepadDisconnected() { return GamepadDisconnected; }
@@ -95,7 +97,7 @@ namespace Engine
 
     // Gamepads currently open, keyed by the stable SDL_JoystickID, so they can be closed
     // correctly (individually on disconnect, or all of them on shutdown).
-    std::unordered_map<SDL_JoystickID, SDL_GameController *> Gamepads;
+    std::unordered_map<SDL_JoystickID, SDL_Gamepad *> Gamepads;
     GameEvent<SDL_JoystickID> GamepadConnected;
     GameEvent<SDL_JoystickID> GamepadDisconnected;
   };

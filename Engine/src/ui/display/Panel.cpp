@@ -1,5 +1,5 @@
 #include "Panel.h"
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 
 namespace Engine::UI
 {
@@ -31,11 +31,11 @@ namespace Engine::UI
       return;
     }
 
-    SDL_Rect DestRect{
-        static_cast<int>(ComputedRect.X),
-        static_cast<int>(ComputedRect.Y),
-        static_cast<int>(ComputedRect.Width),
-        static_cast<int>(ComputedRect.Height)};
+    SDL_FRect DestRect{
+        ComputedRect.X,
+        ComputedRect.Y,
+        ComputedRect.Width,
+        ComputedRect.Height};
 
     // SDL_RenderFillRect ignores alpha unless blending is explicitly enabled; save/restore the
     // renderer's blend mode so this doesn't leak into whatever renders next this frame.

@@ -1,5 +1,5 @@
 #include "Checkbox.h"
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 
 namespace Engine::UI
 {
@@ -50,11 +50,11 @@ namespace Engine::UI
 
     Color BoxColor = IsPressedDown ? PressedColor : (IsHovered ? HoveredColor : NormalColor);
 
-    SDL_Rect BoxRect{
-        static_cast<int>(ComputedRect.X),
-        static_cast<int>(ComputedRect.Y),
-        static_cast<int>(ComputedRect.Width),
-        static_cast<int>(ComputedRect.Height)};
+    SDL_FRect BoxRect{
+        ComputedRect.X,
+        ComputedRect.Y,
+        ComputedRect.Width,
+        ComputedRect.Height};
 
     SDL_BlendMode PreviousBlendMode;
     SDL_GetRenderDrawBlendMode(Renderer, &PreviousBlendMode);
@@ -67,11 +67,11 @@ namespace Engine::UI
     {
       float InsetX = ComputedRect.Width * 0.25f;
       float InsetY = ComputedRect.Height * 0.25f;
-      SDL_Rect CheckRect{
-          static_cast<int>(ComputedRect.X + InsetX),
-          static_cast<int>(ComputedRect.Y + InsetY),
-          static_cast<int>(ComputedRect.Width - InsetX * 2.0f),
-          static_cast<int>(ComputedRect.Height - InsetY * 2.0f)};
+      SDL_FRect CheckRect{
+          ComputedRect.X + InsetX,
+          ComputedRect.Y + InsetY,
+          ComputedRect.Width - InsetX * 2.0f,
+          ComputedRect.Height - InsetY * 2.0f};
 
       SDL_SetRenderDrawColor(Renderer, CheckColor.R, CheckColor.G, CheckColor.B, CheckColor.A);
       SDL_RenderFillRect(Renderer, &CheckRect);

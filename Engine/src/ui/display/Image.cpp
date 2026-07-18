@@ -1,5 +1,5 @@
 #include "Image.h"
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 
 namespace Engine::UI
 {
@@ -41,10 +41,10 @@ namespace Engine::UI
       return Size{};
     }
 
-    int TextureWidth = 0;
-    int TextureHeight = 0;
-    SDL_QueryTexture(TextureHandle, nullptr, nullptr, &TextureWidth, &TextureHeight);
-    return Size{static_cast<float>(TextureWidth), static_cast<float>(TextureHeight)};
+    float TextureWidth = 0.0f;
+    float TextureHeight = 0.0f;
+    SDL_GetTextureSize(TextureHandle, &TextureWidth, &TextureHeight);
+    return Size{TextureWidth, TextureHeight};
   }
 
   void Image::Render(SDL_Renderer *Renderer)
@@ -54,24 +54,24 @@ namespace Engine::UI
       return;
     }
 
-    SDL_Rect DestRect{
-        static_cast<int>(ComputedRect.X),
-        static_cast<int>(ComputedRect.Y),
-        static_cast<int>(ComputedRect.Width),
-        static_cast<int>(ComputedRect.Height)};
+    SDL_FRect DestRect{
+        ComputedRect.X,
+        ComputedRect.Y,
+        ComputedRect.Width,
+        ComputedRect.Height};
 
     if (SourceRect.Width > 0.0f && SourceRect.Height > 0.0f)
     {
-      SDL_Rect SrcRect{
-          static_cast<int>(SourceRect.X),
-          static_cast<int>(SourceRect.Y),
-          static_cast<int>(SourceRect.Width),
-          static_cast<int>(SourceRect.Height)};
-      SDL_RenderCopy(Renderer, TextureHandle, &SrcRect, &DestRect);
+      SDL_FRect SrcRect{
+          SourceRect.X,
+          SourceRect.Y,
+          SourceRect.Width,
+          SourceRect.Height};
+      SDL_RenderTexture(Renderer, TextureHandle, &SrcRect, &DestRect);
     }
     else
     {
-      SDL_RenderCopy(Renderer, TextureHandle, nullptr, &DestRect);
+      SDL_RenderTexture(Renderer, TextureHandle, nullptr, &DestRect);
     }
   }
 }

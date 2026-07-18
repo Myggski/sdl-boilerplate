@@ -7,8 +7,7 @@
 #include <string>
 #include <memory>
 
-struct _TTF_Font;
-using TTF_Font = _TTF_Font;
+struct TTF_Font;
 struct SDL_Texture;
 
 namespace Engine::UI

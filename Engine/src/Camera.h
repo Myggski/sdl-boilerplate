@@ -3,7 +3,7 @@
 #include "Core.h"
 #include "Texture.h"
 #include "math/Rect.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <cmath>
 
 namespace Engine
@@ -21,9 +21,9 @@ namespace Engine
 
     // Draws a sub-rect of InTexture (SourceRect) to a rect on screen (DestRect), optionally
     // rotated (degrees, clockwise, about DestRect's center); game code building sprite draws (see
-    // RenderSystem) should go through this instead of calling SDL_RenderCopy/Ex with a hand-built
-    // SDL_Rect itself, same reasoning as Engine::UI::Color/Engine::Rect: raw SDL types/calls stay
-    // inside the engine.
+    // RenderSystem) should go through this instead of calling SDL_RenderTexture/Rotated with a
+    // hand-built SDL_FRect itself, same reasoning as Engine::UI::Color/Engine::Rect: raw SDL
+    // types/calls stay inside the engine.
     void DrawSprite(Texture *InTexture, Rect SourceRect, Rect DestRect, float RotationDegrees = 0.0f);
 
     // Set the zoom level

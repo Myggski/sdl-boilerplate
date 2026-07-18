@@ -6,8 +6,7 @@
 #include "GameEvent.h"
 #include <memory>
 
-struct _TTF_Font;
-using TTF_Font = _TTF_Font;
+struct TTF_Font;
 
 namespace Engine
 {

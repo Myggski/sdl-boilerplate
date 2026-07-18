@@ -24,7 +24,7 @@ namespace Engine::UI
     Image *SetSourceRect(Rect NewSourceRect);
 
     // Optional: overrides Measure's result. Without one, Measure reports SourceRect's size if
-    // set, otherwise the texture's own pixel size (via SDL_QueryTexture), same "{0,0} means no
+    // set, otherwise the texture's own pixel size (via SDL_GetTextureSize), same "{0,0} means no
     // intrinsic size" convention Panel and Button already use for their own DesiredSize.
     Image *SetDesiredSize(Size NewSize);
 
