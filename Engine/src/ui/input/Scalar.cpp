@@ -43,6 +43,15 @@ namespace Engine::UI
       Value = Value < MinValue ? MinValue : (Value > MaxValue ? MaxValue : Value);
     }
 
+    // std::round can land exactly on IEEE 754 negative zero for small negative inputs (e.g.
+    // std::round(-0.3f) == -0.0f), which "%.0f" then faithfully prints as "-0". Value == 0.0f is
+    // true for both signs, so this reassignment quietly normalizes -0.0f to +0.0f without
+    // affecting any other value.
+    if (Value == 0.0f)
+    {
+      Value = 0.0f;
+    }
+
     RefreshLabel();
     return this;
   }

@@ -63,9 +63,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 # Debug symbols in every build type, not just Debug: CMake's own Release defaults drop -g, and
 # most of what actually runs is in this DLL, not Game.exe (which already sets this unconditionally
-# in Game/CMakeLists.txt) — without it, a Release crash/breakpoint inside Engine code shows a
+# in Game/CMakeLists.txt). Without it, a Release crash/breakpoint inside Engine code shows a
 # symbol-less callstack. Needs -g on both the compile step (embeds debug info in each .obj) and
-# the link step (tells lld-link to actually assemble and emit a .pdb from it) — one without the
+# the link step (tells lld-link to actually assemble and emit a .pdb from it): one without the
 # other silently produces no .pdb at all.
 target_compile_options(${PROJECT_NAME} PRIVATE -g)
 target_link_options(${PROJECT_NAME} PRIVATE -g)
@@ -117,7 +117,7 @@ foreach(DLL ${DLLS_TO_COPY})
 endforeach()
 
 # `cmake --install` support: RUNTIME only (the .dll), not ARCHIVE (the .lib import library, only
-# needed at link time, not by a player) and no .pdb — see top-level CMakeLists.txt for where
+# needed at link time, not by a player) and no .pdb. See top-level CMakeLists.txt for where
 # CMAKE_INSTALL_PREFIX (install/${ARCH}) gets set.
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 install(FILES ${DLLS_TO_COPY} DESTINATION .)

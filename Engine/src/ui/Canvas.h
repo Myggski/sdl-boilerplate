@@ -55,6 +55,7 @@ namespace Engine::UI
     // (mouse-moved-while-held) transitions.
     Widget *HoveredWidget{nullptr};
     Widget *PressedWidget{nullptr};
+    Widget *FocusedWidget{nullptr};
     float LastMouseX{0.0f};
     float LastMouseY{0.0f};
   };

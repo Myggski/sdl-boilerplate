@@ -93,7 +93,7 @@ namespace Engine::UI
     int SelectedIndex = -1;
     bool IsOpen = false;
 
-    Size DesiredSize{160.0f, Theme::Spacing::Large};
+    Size DesiredSize{160.0f, Theme::InputHeight};
     Color NormalColor = Theme::NeutralNormal;
 
     // Theme::PrimaryHovered/PrimaryPressed (blue family), not Theme::NeutralHovered/NeutralPressed

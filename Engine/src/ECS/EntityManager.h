@@ -3,8 +3,12 @@
 #include "Core.h"
 #include <any>
 #include <bitset>
+#include <cstdint>
 #include <deque>
 #include <tuple>
+#include <typeindex>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 #include <functional>
 #include "Entity.h"
@@ -109,9 +113,31 @@ namespace Engine
       }
     }
 
-    // System Management
-    void RegisterSystem(SystemFunc System);
+    // System Management. Priority controls run order within RunSystems, lower runs first, stable
+    // (equal priorities keep registration order). See Engine::SystemPriority for the priorities
+    // EngineContext auto-registers Movement/Animation/Collision at; a game inserting its own
+    // system should pick a priority relative to those constants (e.g. SystemPriority::Movement -
+    // 1 to run before movement) rather than a guessed number.
+    void RegisterSystem(SystemFunc System, int32_t Priority = 0);
     void RunSystems(float DeltaTime);
+
+    // Resource Management: a single global instance per type, not tied to any entity. This is how
+    // systems pass data to each other (e.g. this tick's collision results) without needing a
+    // return value, so they can stay plain (EntityManager&, float) functions registrable via
+    // RegisterSystem like any other system. Not collision-specific; reusable for anything a later
+    // system needs to publish for others to read the same tick (input state, score, ...).
+    template <typename T>
+    void SetResource(T Value)
+    {
+      Resources[std::type_index(typeid(T))] = std::move(Value);
+    }
+
+    template <typename T>
+    T *GetResource()
+    {
+      auto It = Resources.find(std::type_index(typeid(T)));
+      return It != Resources.end() ? std::any_cast<T>(&It->second) : nullptr;
+    }
 
   private:
     Engine::Entity MakeEntity(uint32_t EntityIndex, uint8_t Generation);
@@ -122,7 +148,8 @@ namespace Engine
     std::vector<bool> IsAlive;                 // Tracks which indices are currently in use, for ForEach
     std::deque<uint32_t> FreeIndices;          // Queue of recycled indices
     std::vector<ComponentMask> ComponentMasks; // Component masks
-    std::vector<SystemFunc> Systems;           // Registered systems
+    std::vector<std::pair<int32_t, SystemFunc>> Systems; // Registered systems, kept sorted by priority
     std::vector<std::any> Components;          // One ComponentArray<T> per component type, indexed by ComponentId
+    std::unordered_map<std::type_index, std::any> Resources; // One instance per type, see SetResource/GetResource
   };
 }

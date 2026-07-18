@@ -8,7 +8,7 @@ Engine/Game split: `Engine/` is the reusable library (DLL), `Game/` is where you
 ## Build & run
 
 Requires LLVM/Clang + Ninja on `PATH`, and Dear ImGui sources under `%CMAKE_PREFIX_PATH%/imgui`
-(e.g. `C:\Code\sdks\imgui`) — the only manual dependency. SDL2/SDL2_image/SDL2_ttf are fetched and
+(e.g. `C:\Code\sdks\imgui`), the only manual dependency. SDL2/SDL2_image/SDL2_ttf are fetched and
 built automatically via `cmake/Dependencies.cmake`.
 
 ```
@@ -17,10 +17,10 @@ cmake --build --preset x64-debug
 ```
 
 Other presets: `x64-release`, `x64-debug-msvc` (MSVC, CMake-only for now). VS Code: "Build
-Debug/Release x64" tasks + `cppvsdbg` launch configs in `.vscode/` (not lldb — this toolchain's
+Debug/Release x64" tasks + `cppvsdbg` launch configs in `.vscode/` (not lldb: this toolchain's
 PDB debug info needs the native Windows debugger to resolve reliably).
 
-To package a build for distribution: `cmake --install build/x64-release` — copies just the `.exe`,
+To package a build for distribution: `cmake --install build/x64-release` copies just the `.exe`,
 the DLLs it needs, and `assets/` into `install/x64/`, ready to zip. `--prefix <dir>` to install
 elsewhere.
 
@@ -47,8 +47,11 @@ Engine/
       display/               Panel, Text, Image
 
 Game/
-  Game.h/.cpp        Write your game here: Startup/Update/Draw/Shutdown
-  Bootstrap.cpp      Framework glue; no need to open it
+  Game.h/.cpp        Write your game here: Startup/Update/Draw/Shutdown; the only files meant to
+                      be edited to make a game
+  framework/          Glue + settings, out of the way of Game.h/.cpp
+    Bootstrap.cpp       Wires Game's callbacks into the engine; no need to open it
+    CollisionSettings.h   Collision layers + CollisionMatrix, header-only (see Engine/src/ecs/CollisionMatrix.h)
   assets/            Game content
 
 cmake/Dependencies.cmake   FetchContent for SDL2/SDL2_image/SDL2_ttf
@@ -58,7 +61,7 @@ CMakePresets.json           x64-debug/x64-release/x64-debug-msvc
 ## Design system
 
 `Engine::UI::Theme` (`Engine/src/ui/Theme.h`) is the single source of truth for UI colors and
-spacing — widgets and game code should pull from it rather than hardcoding values.
+spacing, widgets and game code should pull from it rather than hardcoding values.
 
 - **Colors**: `Engine::UI::Color`, never `SDL_Color`. The [Lospec "31" palette](https://lospec.com/palette-list/31)
   lives under `Theme::Palette`, used only through semantic roles (`PrimaryNormal/Hovered/Pressed`,
@@ -72,8 +75,13 @@ spacing — widgets and game code should pull from it rather than hardcoding val
 - An `ENGINE_API` class's inline `= default` constructor won't get its DLL symbol exported unless
   something inside Engine's own compiled sources calls it. Declare it in the header, define it
   (even `= default`) in the matching `.cpp`.
-- Adding a new `.cpp` file needs a reconfigure (`cmake --preset ...`), not just a rebuild — the
-  `file(GLOB ...)` source list won't pick it up otherwise.
+- Adding a new `.cpp` file needs a reconfigure (`cmake --preset ...`), not just a rebuild: the
+  `file(GLOB ...)` source list won't pick it up otherwise. `Game/`'s own source list isn't a glob
+  at all, so a new `Game/` `.cpp` also needs adding to `SOURCE_FILES` in `Game/CMakeLists.txt`.
+- `Engine/EntryPoint.h` defines `main()` inline. Only `#include "Engine.h"` (the umbrella, which
+  pulls it in) from exactly one `Game/` `.cpp`. A second one including it too duplicates `main()`
+  at link time. Other `Game/` files needing engine types should include the specific header they
+  need instead (e.g. `#include "src/ecs/CollisionMatrix.h"`), not the umbrella.
 - `x64-debug-msvc` only covers the CMake configure/build side, no VS Code launch config yet.
 - `Dropdown` has no popup/layering system to float on (`Canvas` doesn't have one yet), so its open
   option list can be drawn over by anything rendered after it in tree order. Rare in practice.

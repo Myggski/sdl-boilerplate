@@ -63,9 +63,15 @@ namespace Engine
     GameEvent<SDL_JoystickID> &OnGamepadConnected() { return GamepadConnected; }
     GameEvent<SDL_JoystickID> &OnGamepadDisconnected() { return GamepadDisconnected; }
 
+    // Text typed and keys pressed this frame, for Engine::UI::Canvas to forward to whichever
+    // widget currently holds keyboard focus. Cleared every LateUpdate, same as PreviousMouseButtons.
+    const std::string &GetTextInputThisFrame() const { return TextInputThisFrame; }
+    const std::vector<SDL_Scancode> &GetKeysPressedThisFrame() const { return KeysPressedThisFrame; }
+
   private:
     void OnKeyPressed(SDL_Event Event);
     void OnKeyReleased(SDL_Event Event);
+    void OnTextInput(SDL_Event Event);
     void OnMouseMotion(SDL_Event Event);
     void OnMouseButtonDown(SDL_Event Event);
     void OnMouseButtonUp(SDL_Event Event);
@@ -83,6 +89,9 @@ namespace Engine
     int MouseY{0};
 
     bool PointerClaimed{false};
+
+    std::string TextInputThisFrame;
+    std::vector<SDL_Scancode> KeysPressedThisFrame;
 
     // Gamepads currently open, keyed by the stable SDL_JoystickID, so they can be closed
     // correctly (individually on disconnect, or all of them on shutdown).

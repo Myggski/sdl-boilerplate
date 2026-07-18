@@ -1,8 +1,11 @@
 #pragma once
 
 #include "Core.h"
+#include <SDL_keycode.h>
+#include <SDL_scancode.h>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 
 struct SDL_Renderer;
@@ -102,6 +105,16 @@ namespace Engine::UI
     // per-frame deltas at a separately-tuned sensitivity, which would drift out of sync with it.
     virtual void OnPointerDrag(float X, float Y, float DeltaX, float DeltaY);
 
+    // No-op by default; Canvas calls these when keyboard focus moves to/from this widget
+    // (only ever reachable for widgets with WantsFocus set), and forwards this frame's text
+    // input / key presses here while this widget holds focus. Not meant to be called directly
+    // by game code. Modifiers is the live modifier state (SDL_GetModState()) at the moment
+    // Canvas forwards the key, for Shift/Ctrl-qualified shortcuts (selection, copy/paste).
+    virtual void OnFocusGained();
+    virtual void OnFocusLost();
+    virtual void OnTextInput(const std::string &Text);
+    virtual void OnKeyDown(SDL_Scancode PressedKey, SDL_Keymod Modifiers);
+
     const Rect &GetComputedRect() const { return ComputedRect; }
 
     bool Visible = true;
@@ -110,6 +123,10 @@ namespace Engine::UI
     // Off by default so decorative widgets (Panel, plain layout boxes) don't silently start
     // eating clicks just by existing; Button defaults this on.
     bool BlocksInput = false;
+
+    // Opt-in: can this widget hold keyboard focus. Off by default; TextInput sets this on.
+    // Canvas transfers focus to a clicked widget only if this is true.
+    bool WantsFocus = false;
 
   protected:
     Rect ComputedRect{};

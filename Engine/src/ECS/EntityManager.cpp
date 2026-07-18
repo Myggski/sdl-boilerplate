@@ -1,4 +1,6 @@
 #include "EntityManager.h"
+#include "Log.h"
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -70,16 +72,37 @@ namespace Engine
   }
 
   // System Management
-  void EntityManager::RegisterSystem(SystemFunc System)
+  void EntityManager::RegisterSystem(SystemFunc System, int32_t Priority)
   {
-    Systems.push_back(System); // Add the system to the list
+    // Not an error: two systems sharing a priority is well-defined (registration order breaks
+    // the tie), and sometimes genuinely fine (order between them truly doesn't matter). Still
+    // worth a warning, since it's just as often an accidental reuse of a priority already claimed
+    // by e.g. Engine::SystemPriority::Animation.
+    bool PriorityAlreadyUsed = std::any_of(Systems.begin(), Systems.end(),
+                                           [Priority](const std::pair<int32_t, SystemFunc> &Existing)
+                                           { return Existing.first == Priority; });
+    if (PriorityAlreadyUsed)
+    {
+      ENGINE_LOG_WARN("RegisterSystem: priority %d is already used by another system; order "
+                       "between them falls back to registration order",
+                       Priority);
+    }
+
+    Systems.emplace_back(Priority, std::move(System));
+
+    // Re-sort on every registration rather than a one-shot sort in RunSystems: stable_sort only
+    // ever reorders relative to differing priorities, so this correctly preserves registration
+    // order among equal priorities across separate RegisterSystem calls, not just within one.
+    std::stable_sort(Systems.begin(), Systems.end(),
+                      [](const std::pair<int32_t, SystemFunc> &A, const std::pair<int32_t, SystemFunc> &B)
+                      { return A.first < B.first; });
   }
 
   void EntityManager::RunSystems(float DeltaTime)
   {
-    for (SystemFunc &System : Systems)
+    for (std::pair<int32_t, SystemFunc> &System : Systems)
     {
-      System(DeltaTime); // Run all registered systems
+      System.second(DeltaTime); // Run all registered systems, in priority order
     }
   }
 

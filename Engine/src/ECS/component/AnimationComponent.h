@@ -11,7 +11,7 @@ namespace Engine
   // Paired with a SpriteComponent on the same entity: AnimationSystem steps through Frames over
   // time and writes the current one into that SpriteComponent's SourceRect. An entity with only a
   // SpriteComponent (no AnimationComponent) is simply never touched by AnimationSystem's
-  // ForEach<AnimationComponent, SpriteComponent> query, and stays static — no special-casing
+  // ForEach<AnimationComponent, SpriteComponent> query, and stays static. No special-casing is
   // needed on either side for static-vs-animated to coexist.
   struct ENGINE_API AnimationComponent
   {
@@ -29,7 +29,7 @@ namespace Engine
   };
 
   // Builds a row of FrameCount equal-size frames from a spritesheet, left to right starting at
-  // Origin, for AnimationComponent::Frames — e.g. MakeGridFrames({0, 0}, 16.0f, 16.0f, 4) for
+  // Origin, for AnimationComponent::Frames, e.g. MakeGridFrames({0, 0}, 16.0f, 16.0f, 4) for
   // bomb.png's 4 horizontal 16x16 frames, instead of hand-writing 4 Rect literals. Single-row
   // only for now; extend if/when a game asset actually needs a multi-row grid.
   ENGINE_API std::vector<Rect> MakeGridFrames(Vector2D Origin, float FrameWidth, float FrameHeight, size_t FrameCount);

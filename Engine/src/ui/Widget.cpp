@@ -37,4 +37,9 @@ namespace Engine::UI
   void Widget::OnPointerDown(float, float) {}
   void Widget::OnPointerUp(bool) {}
   void Widget::OnPointerDrag(float, float, float, float) {}
+
+  void Widget::OnFocusGained() {}
+  void Widget::OnFocusLost() {}
+  void Widget::OnTextInput(const std::string &) {}
+  void Widget::OnKeyDown(SDL_Scancode, SDL_Keymod) {}
 }

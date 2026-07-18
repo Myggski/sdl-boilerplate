@@ -70,8 +70,11 @@ namespace Engine::UI::Theme
   inline constexpr Color NeutralHovered = Palette::GrayMid;
   inline constexpr Color NeutralPressed = Palette::BrownDark;
 
-  // Fill bars, checkmarks, selection highlights: anything that's a small accent rather than a
-  // whole button's background.
+  // A standalone highlight/warning color, not the standard interactive accent: fill bars,
+  // checkmarks, and selection highlights all use PrimaryNormal instead (see Scalar, Checkbox,
+  // Dropdown), since gold reads as a warning next to a widget's own neutral-gray box (see
+  // Scalar.h's FillColor comment). Reach for this for a genuinely separate, attention-grabbing
+  // highlight, not as "the" accent color for interactive widget state.
   inline constexpr Color Accent = Palette::Gold;
 
   // 8px base unit grid (the one piece of Material Design's system this engine follows; its
@@ -93,6 +96,14 @@ namespace Engine::UI::Theme
   // especially for anyone with reduced fine motor control. Matches Spacing::XXLarge; kept as its
   // own name since the two mean different things even though they're numerically the same today.
   inline constexpr float MinTouchTarget = 48.0f;
+
+  // Shared row height for single-line data-entry controls (Scalar, Dropdown, TextInput): the same
+  // widgets a form/toolbar would line up side by side, so they should read as one family rather
+  // than each guessing its own height. Matches Spacing::XLarge; kept as its own name for the same
+  // reason as MinTouchTarget above. Deliberately doesn't cover Checkbox (a small square toggle by
+  // design, meant to pair with its own label rather than match a row) or Button (spans everything
+  // from small icon buttons to large touch targets, no single height fits its range of uses).
+  inline constexpr float InputHeight = Spacing::XLarge;
 
   // Default text appearance for widgets that build a Text label on the caller's behalf (see
   // Engine::UI::CreateLabel, Scalar::SetFont(AssetManager&, ...), Dropdown's equivalent), so call

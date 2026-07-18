@@ -4,7 +4,7 @@ project(sdl-boilerplate-game)
 # Set source files
 set(SOURCE_FILES
     Game.cpp
-    Bootstrap.cpp
+    framework/Bootstrap.cpp
     ${CMAKE_SOURCE_DIR}/Engine/EntryPoint.h # Include EntryPoint.h if it contains main()
 )
 
@@ -16,7 +16,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # Debug symbols in every build type, not just Debug. Needs -g on both the compile step (embeds
 # debug info in each .obj) and the link step (tells lld-link to actually assemble and emit a .pdb
-# from it) — one without the other silently produces no .pdb at all.
+# from it): one without the other silently produces no .pdb at all.
 target_compile_options(${PROJECT_NAME} PRIVATE -g)
 target_link_options(${PROJECT_NAME} PRIVATE -g)
 
@@ -49,6 +49,6 @@ set_target_properties(${PROJECT_NAME}
 # Set the startup project for Visual Studio (if needed)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 
-# `cmake --install` support: RUNTIME only (the .exe), not the .pdb — see top-level CMakeLists.txt
+# `cmake --install` support: RUNTIME only (the .exe), not the .pdb. See top-level CMakeLists.txt
 # for where CMAKE_INSTALL_PREFIX (install/${ARCH}) gets set, and for the shared assets/ install.
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)

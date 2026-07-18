@@ -30,6 +30,16 @@ namespace Engine
       return Vector2D(X / Scalar, Y / Scalar);
     }
 
+    float LengthSquared() const
+    {
+      return X * X + Y * Y;
+    }
+
+    float DistanceSquared(const Vector2D &Other) const
+    {
+      return (*this - Other).LengthSquared();
+    }
+
   public:
     float X = 0.0f;
     float Y = 0.0f;

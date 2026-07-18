@@ -9,12 +9,14 @@ namespace Engine
 
   InputManager::InputManager(SDLEventDispatcher &Dispatcher)
   {
-    EventHandlers.reserve(7);
+    EventHandlers.reserve(8);
 
     EventHandlers.emplace_back(Dispatcher, SDL_KEYDOWN, [this](const SDL_Event &Event)
                                { OnKeyPressed(Event); });
     EventHandlers.emplace_back(Dispatcher, SDL_KEYUP, [this](const SDL_Event &Event)
                                { OnKeyReleased(Event); });
+    EventHandlers.emplace_back(Dispatcher, SDL_TEXTINPUT, [this](const SDL_Event &Event)
+                               { OnTextInput(Event); });
     EventHandlers.emplace_back(Dispatcher, SDL_MOUSEMOTION, [this](const SDL_Event &Event)
                                { OnMouseMotion(Event); });
     EventHandlers.emplace_back(Dispatcher, SDL_MOUSEBUTTONDOWN, [this](const SDL_Event &Event)
@@ -25,6 +27,10 @@ namespace Engine
                                { OnGamepadDeviceAdded(Event); });
     EventHandlers.emplace_back(Dispatcher, SDL_CONTROLLERDEVICEREMOVED, [this](const SDL_Event &Event)
                                { OnGamepadDeviceRemoved(Event); });
+
+    // Unconditional: this is a desktop-only engine with no IME/on-screen-keyboard concerns that
+    // would motivate gating text input to only-while-focused.
+    SDL_StartTextInput();
   }
 
   InputManager::~InputManager()
@@ -38,10 +44,16 @@ namespace Engine
   void InputManager::LateUpdate()
   {
     PreviousMouseButtons = MouseButtons;
+    TextInputThisFrame.clear();
+    KeysPressedThisFrame.clear();
   }
 
   void InputManager::OnKeyPressed(SDL_Event Event)
   {
+    // Every SDL_KEYDOWN lands here, OS auto-repeats included, so this unconditionally captures
+    // every scancode pressed this frame, repeats and all.
+    KeysPressedThisFrame.push_back(Event.key.keysym.scancode);
+
     if (IsKeyReleased(Event.key.keysym.scancode))
     {
       Keys[Event.key.keysym.scancode] = InputData(Event.key.keysym.scancode);
@@ -55,6 +67,11 @@ namespace Engine
   void InputManager::OnKeyReleased(SDL_Event Event)
   {
     Keys.erase(Event.key.keysym.scancode);
+  }
+
+  void InputManager::OnTextInput(SDL_Event Event)
+  {
+    TextInputThisFrame += Event.text.text;
   }
 
   void InputManager::OnMouseMotion(SDL_Event Event)

@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Engine.h"
+#include "framework/CollisionSettings.h"
 
 #ifdef ENGINE_WITH_DEBUG_UI
 #include "imgui.h"
@@ -15,15 +16,15 @@ namespace Game
 
   Entity Player;
   Entity Prop;
+  Entity Wall;
   Texture *PlayerTexture = nullptr;
   Panel *Indicator = nullptr;
 
   bool Startup(EngineContext &Context)
   {
-    Context.World.RegisterSystem([&Context](float DeltaTime)
-                                 { MovementSystem(Context.World, DeltaTime); });
-    Context.World.RegisterSystem([&Context](float DeltaTime)
-                                 { AnimationSystem(Context.World, DeltaTime); });
+    // Movement/Animation/Collision are already registered by EngineContext. Publish this game's
+    // own layer matrix so CollisionSystem has something to check against.
+    Context.World.SetResource<CollisionMatrix>(Matrix);
 
     Player = Context.World.CreateEntity();
     Context.World.AddComponent<TransformComponent>(Player, {});
@@ -42,6 +43,8 @@ namespace Game
     Context.World.AddComponent<SpriteComponent>(Player, {PlayerTexture, Engine::Rect{0.0f, 0.0f, 16.0f, 16.0f}});
     Context.World.AddComponent<AnimationComponent>(
         Player, {MakeGridFrames(Vector2D{0.0f, 0.0f}, 16.0f, 16.0f, 4u), 0.15f});
+    Context.World.AddComponent<ColliderComponent>(
+        Player, ColliderComponent{8.0f, Layers::Player});
 
     // A second, static entity (e.g. a rock/prop): a SpriteComponent alone, no VelocityComponent
     // and no AnimationComponent, so MovementSystem's and AnimationSystem's ForEach queries both
@@ -50,6 +53,18 @@ namespace Game
     Prop = Context.World.CreateEntity();
     Context.World.AddComponent<TransformComponent>(Prop, {{220.0f, 60.0f}, 0.0f, {1.0f, 1.0f}});
     Context.World.AddComponent<SpriteComponent>(Prop, {PlayerTexture, Engine::Rect{0.0f, 0.0f, 16.0f, 16.0f}});
+    // IsStatic = false (the default): Prop never moves, but it isn't world geometry either. If
+    // marked static, Wall-vs-Prop would be silently skipped as a static-static pair.
+    Context.World.AddComponent<ColliderComponent>(
+        Prop, ColliderComponent{Vector2D{8.0f, 8.0f}, Layers::Prop});
+
+    // A third entity purely for collision: no sprite, just world geometry near Player's start so
+    // the Circle-AABB + static-collider path is exercised quickly rather than waiting for Player
+    // to drift there at its slow 1px/s velocity.
+    Wall = Context.World.CreateEntity();
+    Context.World.AddComponent<TransformComponent>(Wall, {{15.0f, 15.0f}, 0.0f, {1.0f, 1.0f}});
+    Context.World.AddComponent<ColliderComponent>(
+        Wall, ColliderComponent{Vector2D{8.0f, 8.0f}, Layers::Terrain, /*IsStatic=*/true});
 
     std::unique_ptr<VerticalBox> CornerBox = CreateWidget<VerticalBox>();
     std::unique_ptr<Panel> IndicatorPanel = CreateWidget<Panel>(Accent);
@@ -109,6 +124,15 @@ namespace Game
       Indicator->SetColor(Colors[NewIndex]);
       ENGINE_LOG_INFO("Dropdown selection: %d", NewIndex); });
     Toolbar->AddSlot(std::move(DropdownWidget));
+
+    std::unique_ptr<TextInput> NameInput = CreateWidget<TextInput>();
+    NameInput->SetFont(Context.Assets)
+        ->SetPlaceholder("Enter your name")
+        ->SetMaxLength(20)
+        ->OnSubmitted()
+        .Add([]()
+             { ENGINE_LOG_INFO("Name submitted"); });
+    Toolbar->AddSlot(std::move(NameInput));
 
     RootBox->SetDefaultCrossAlignment(Alignment::Center)->SetDefaultPadding(192.0f);
     RootBox->AddSlot(std::move(ToolbarBox));

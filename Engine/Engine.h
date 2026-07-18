@@ -12,12 +12,16 @@
 #include "src/sdl/SDLEventDispatcher.h"
 #include "src/sdl/SDLEventHandler.h"
 
+#include "src/ecs/CollisionMatrix.h"
 #include "src/ecs/EntityManager.h"
+#include "src/ecs/SystemPriority.h"
 #include "src/ecs/component/AnimationComponent.h"
+#include "src/ecs/component/ColliderComponent.h"
 #include "src/ecs/component/SpriteComponent.h"
 #include "src/ecs/component/TransformComponent.h"
 #include "src/ecs/component/VelocityComponent.h"
 #include "src/ecs/system/AnimationSystem.h"
+#include "src/ecs/system/CollisionSystem.h"
 #include "src/ecs/system/MovementSystem.h"
 #include "src/ecs/system/RenderSystem.h"
 
@@ -33,4 +37,5 @@
 #include "src/ui/input/Checkbox.h"
 #include "src/ui/input/Scalar.h"
 #include "src/ui/input/Dropdown.h"
+#include "src/ui/input/TextInput.h"
 #include "src/ui/Canvas.h"

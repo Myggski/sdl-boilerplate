@@ -92,11 +92,16 @@ namespace Engine::UI
     float Step = 0.0f;
     float DragSensitivity = 0.1f;
 
-    Size DesiredSize{80.0f, Theme::Spacing::Large};
+    Size DesiredSize{80.0f, Theme::InputHeight};
 
     Color NormalColor = Theme::NeutralNormal;
-    Color HoveredColor = Theme::NeutralHovered;
-    Color PressedColor = Theme::NeutralPressed;
+
+    // Theme::PrimaryHovered/PrimaryPressed (blue family), not Theme::NeutralHovered/NeutralPressed
+    // (a warm gray/brown that reads unrelated next to FillColor's blue below), same reasoning as
+    // Dropdown's HoveredColor/PressedColor: hovering or pressing should feel like the same family
+    // of feedback as the fill bar already showing, not a visually unrelated color.
+    Color HoveredColor = Theme::PrimaryHovered;
+    Color PressedColor = Theme::PrimaryPressed;
 
     // Theme::Accent (gold) reads as a warning here. A lighter blue (e.g. Palette::Slate) looks
     // fine against NormalColor but fails badly once the Label's white text sits on top of it

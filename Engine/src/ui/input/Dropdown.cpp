@@ -151,8 +151,12 @@ namespace Engine::UI
 
   Size Dropdown::Measure(Size AvailableSize)
   {
+    // Both axes clamp up to DesiredSize: previously only Width did, so Height silently fell back
+    // to the header label's raw glyph height with no padding at all, regardless of what
+    // DesiredSize.Height said. Text::Render already centers within whatever ComputedRect it's
+    // given, so growing the header taller than the label needs reads as padding for free.
     Size Measured = Header->Measure(AvailableSize);
-    return Size{std::max(DesiredSize.Width, Measured.Width), Measured.Height};
+    return Size{std::max(DesiredSize.Width, Measured.Width), std::max(DesiredSize.Height, Measured.Height)};
   }
 
   void Dropdown::Arrange(Rect FinalRect)

@@ -28,7 +28,9 @@ namespace Engine
     AssetManager Assets;
     InputManager Input;
     Camera MainCamera;
-    EntityManager World;  // the ECS: create entities, add components, register systems here
+    EntityManager World;  // the ECS: create entities, add components. Movement/Animation/
+                          // Collision are already registered (see EngineContext.cpp); register
+                          // any of your own game-specific systems here too
     UI::Canvas UICanvas;  // the retained UI tree: menus, HUD, etc.; renders on top of the game
     DebugOverlay Overlay; // Dear ImGui; a no-op in Release builds, see DebugOverlay.h
   };

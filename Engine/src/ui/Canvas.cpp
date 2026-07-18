@@ -2,6 +2,7 @@
 #include "../InputManager.h"
 #include <SDL_render.h>
 #include <SDL_mouse.h>
+#include <SDL_keyboard.h>
 
 namespace Engine::UI
 {
@@ -95,6 +96,40 @@ namespace Engine::UI
     else if (PressedWidget && (DeltaX != 0.0f || DeltaY != 0.0f))
     {
       PressedWidget->OnPointerDrag(MouseX, MouseY, DeltaX, DeltaY);
+    }
+
+    if (LeftJustPressed)
+    {
+      // Widget wanting focus: transfer it there. Otherwise (hit nothing, or hit a widget that
+      // doesn't want focus): clear it, giving "click elsewhere defocuses" for free.
+      Widget *NewFocus = (HitWidget && HitWidget->WantsFocus) ? HitWidget : nullptr;
+      if (NewFocus != FocusedWidget)
+      {
+        if (FocusedWidget)
+        {
+          FocusedWidget->OnFocusLost();
+        }
+        FocusedWidget = NewFocus;
+        if (FocusedWidget)
+        {
+          FocusedWidget->OnFocusGained();
+        }
+      }
+    }
+
+    if (FocusedWidget)
+    {
+      const std::string &TypedThisFrame = Input.GetTextInputThisFrame();
+      if (!TypedThisFrame.empty())
+      {
+        FocusedWidget->OnTextInput(TypedThisFrame);
+      }
+
+      SDL_Keymod Modifiers = SDL_GetModState();
+      for (SDL_Scancode Scancode : Input.GetKeysPressedThisFrame())
+      {
+        FocusedWidget->OnKeyDown(Scancode, Modifiers);
+      }
     }
   }
 
