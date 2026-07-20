@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.16)
+# Kept in sync with Engine/CMakeLists.txt's minimum.
+cmake_minimum_required(VERSION 3.24)
 
 # Only x64 is supported/tested for now; override with -DARCH=... if a 32-bit build is ever needed.
 if(NOT ARCH)
@@ -27,6 +28,13 @@ endif()
 # Set the C++ standard to C++23
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Opt-in compiler cache; no-op if not installed. Must be set before project().
+find_program(SCCACHE_PROGRAM sccache)
+if(SCCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE FILEPATH "" FORCE)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE FILEPATH "" FORCE)
+endif()
 
 project(sdl-boilerplate)
 

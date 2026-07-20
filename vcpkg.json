@@ -1,0 +1,26 @@
+{
+  "name": "sdl-boilerplate",
+  "version-string": "0.0.0",
+  "builtin-baseline": "0878b5224d4a4968940ee296a2e7fae2d3b62983",
+  "dependencies": [
+    "gamenetworkingsockets",
+    "sdl3",
+    {
+      "name": "sdl3-image",
+      "features": ["png"]
+    },
+    {
+      "name": "sdl3-ttf",
+      "features": ["harfbuzz", "svg"]
+    },
+    {
+      "name": "imgui",
+      "features": ["sdl3-binding", "sdl3-renderer-binding"]
+    }
+  ],
+  "overrides": [
+    { "name": "gamenetworkingsockets", "version": "1.4.1" },
+    { "name": "protobuf", "version": "3.21.6" },
+    { "name": "openssl", "version": "3.0.5" }
+  ]
+}

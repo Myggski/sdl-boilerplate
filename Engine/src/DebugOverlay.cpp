@@ -2,8 +2,8 @@
 
 #ifdef ENGINE_WITH_DEBUG_UI
 #include "imgui.h"
-#include "backends/imgui_impl_sdl3.h"
-#include "backends/imgui_impl_sdlrenderer3.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 #include "sdl/SDLEventDispatcher.h"
 #include "Camera.h"
 #include <SDL3/SDL.h>
@@ -51,12 +51,16 @@ namespace Engine
   {
     ImGui::Render();
 
-    // ImGui draws in screen pixels; the camera's pixel-art zoom scale/viewport must not apply to
-    // it. Reset(), not just ResetScale(): PreRender's small game-world viewport would otherwise
-    // clip ImGui's draw calls to that same small region.
+    // ImGui draws in screen pixels; Reset() (not ResetScale()) also clears the game-world
+    // viewport, which would otherwise clip ImGui's draw calls.
     MainCamera.Reset();
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), Renderer);
     MainCamera.SetZoomScale();
+  }
+
+  ImGuiContext *DebugOverlay::GetImGuiContext() const
+  {
+    return ImGui::GetCurrentContext();
   }
 
 #else
@@ -66,6 +70,7 @@ namespace Engine
   DebugOverlay::~DebugOverlay() = default;
   void DebugOverlay::BeginFrame() {}
   void DebugOverlay::EndFrame(SDL_Renderer *, Camera &) {}
+  ImGuiContext *DebugOverlay::GetImGuiContext() const { return nullptr; }
 
 #endif
 }

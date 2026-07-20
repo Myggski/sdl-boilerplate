@@ -32,9 +32,13 @@ namespace Engine
     InputManager(const InputManager &) = delete;
     InputManager &operator=(const InputManager &) = delete;
 
-    // Snapshots the current input state as "previous" state. Call once per frame, after input
-    // for the frame has been processed, so IsKeyReleased/IsMouseButtonReleased can compare
-    // against it next frame.
+    // Snapshots the current input state as "previous" state. Call once per real (rendered) frame,
+    // after input for the frame has been processed, so IsKeyReleased/IsMouseButtonReleased can
+    // compare against it next frame. Only valid to call/rely on at that same cadence: don't read
+    // IsMouseButtonJustPressed/IsMouseButtonReleased from GameEngine's fixed-timestep Update loop,
+    // it can run zero times in a given real frame and silently miss a click's one-frame edge. Game
+    // code needing a click inside Update should latch it in Draw (also once per real frame, see
+    // Game.cpp's own point-and-click demo) and consume the latch from Update instead.
     void LateUpdate();
 
     bool IsKeyPressed(const SDL_Scancode Scancode) const;

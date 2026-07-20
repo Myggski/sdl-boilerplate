@@ -21,18 +21,14 @@ namespace Engine::UI
   class Button;
   class Text;
 
-  // A header Button showing the selected option; click it to open a list of option Buttons
-  // below it, click one to select it and close.
+  // A header Button showing the selected option; click it to open a list of option Buttons below
+  // it, click one to select it and close.
   //
-  // Only the header participates in normal layout: Measure/Arrange forward to it alone, so
-  // Dropdown always reports the same (closed) size to whatever container it sits in, opening it
-  // never reflows surrounding widgets. The options list is a separate widget Dropdown positions
-  // itself, directly below the header's own arranged rect, and only renders/hit-tests it while
-  // open; this deliberately steps outside normal layout flow since there is no popup/layering
-  // system yet (see Canvas) for it to float on. The one real limitation from doing it this way:
-  // the open list can still be drawn over by anything else that renders after this Dropdown in
-  // tree order, since there is no separate topmost layer, just draw order. Rare in practice, a
-  // real floating layer is future work once Canvas grows one.
+  // Only the header participates in normal layout (Measure/Arrange forward to it alone, so
+  // opening never reflows surrounding widgets); the options list is positioned and
+  // rendered/hit-tested separately, outside normal layout flow, since Canvas has no
+  // popup/layering system yet. Limitation: the open list can still be drawn over by anything
+  // rendered after this Dropdown in tree order.
   class ENGINE_API Dropdown : public Widget
   {
   public:
@@ -57,9 +53,8 @@ namespace Engine::UI
 
     Dropdown *SetTextColor(Color NewColor);
 
-    // Minimum width Measure() reports (the header/option Buttons still size themselves from
-    // their Text labels' natural glyph size otherwise, same as Button does with Content set);
-    // not a fixed/exact size. Height always comes from the header alone (see class comment).
+    // Minimum width Measure() reports, not a fixed/exact size. Height always comes from the
+    // header alone (see class comment).
     Dropdown *SetDesiredSize(Size NewSize);
 
     Size Measure(Size AvailableSize) override;
@@ -79,12 +74,9 @@ namespace Engine::UI
     Text *HeaderLabel = nullptr;
     std::unique_ptr<VerticalBox> OptionsBox;
 
-    // Non-owning; OptionsBox's slots own the actual Buttons. Kept so selecting an option (see
-    // SelectOption) can recolor the affected buttons in place instead of destroying and
-    // recreating them, since a rebuild would destroy the very Button whose own OnClicked
-    // callback is executing SelectOption, a use-after-free (the button's Clicked GameEvent is
-    // mid-broadcast, iterating its own Functions list, when the button gets deleted out from
-    // under it).
+    // Non-owning; OptionsBox's slots own the actual Buttons. Kept so SelectOption can recolor in
+    // place instead of rebuilding, which would destroy the very Button whose OnClicked callback
+    // is currently executing SelectOption (use-after-free).
     std::vector<Button *> OptionButtons;
 
     TTF_Font *Font = nullptr;
@@ -95,10 +87,7 @@ namespace Engine::UI
     Size DesiredSize{160.0f, Theme::InputHeight};
     Color NormalColor = Theme::NeutralNormal;
 
-    // Theme::PrimaryHovered/PrimaryPressed (blue family), not Theme::NeutralHovered/NeutralPressed
-    // (a warm gray/brown that reads unrelated next to SelectedOptionColor's blue below): hovering
-    // or pressing any option should feel like the same family of feedback as "this is the
-    // selected one", not a visually unrelated color.
+    // Primary* family, not Neutral*, so hover/press feedback matches SelectedOptionColor's family.
     Color HoveredColor = Theme::PrimaryHovered;
     Color PressedColor = Theme::PrimaryPressed;
 

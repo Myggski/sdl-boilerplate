@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core.h"
+#include <cmath>
 
 namespace Engine
 {
@@ -38,6 +39,22 @@ namespace Engine
     float DistanceSquared(const Vector2D &Other) const
     {
       return (*this - Other).LengthSquared();
+    }
+
+    float Length() const
+    {
+      return std::sqrt(LengthSquared());
+    }
+
+    // {0,0} if Length is ~0, rather than dividing by zero into NaN/Inf.
+    Vector2D Normalized() const
+    {
+      float Len = Length();
+      if (Len < 0.0001f)
+      {
+        return Vector2D{0.0f, 0.0f};
+      }
+      return Vector2D{X / Len, Y / Len};
     }
 
   public:

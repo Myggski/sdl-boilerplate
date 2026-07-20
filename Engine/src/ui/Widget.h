@@ -37,12 +37,8 @@ namespace Engine::UI
     float Bottom = 0.0f;
   };
 
-  // The engine's own color type: the public UI API (widget setters, Theme's constants) uses this,
-  // never SDL_Color directly, and Engine::UI::Color is all game code ever sees through the normal
-  // #include "Engine.h" umbrella. Most SDL calls (SDL_SetRenderDrawColor, SDL_SetTextureColorMod)
-  // take separate r/g/b/a bytes and need no conversion at all; the one real exception (SDL_ttf's
-  // TTF_RenderUTF8_Blended, see Text.cpp) converts via ToSDLColor() in ColorConversion.h, an
-  // engine-internal header not included from Engine.h, so SDL_Color itself never leaks out here.
+  // The engine's own color type; game code sees this, never SDL_Color, through the Engine.h
+  // umbrella. Converts to SDL_Color only where actually needed (see SDLConversions.h).
   struct Color
   {
     uint8_t R = 0;
@@ -61,12 +57,10 @@ namespace Engine::UI
     Fill
   };
 
-  // Base of the retained UI tree. A plain Widget with no children/rendering is a valid,
-  // invisible spacer, deliberately not abstract. Layout is two passes, standard for
-  // flex-style/retained UI: Measure (bottom-up, "how much space do you want") then Arrange
-  // (top-down, "here's the space you actually get"); Render happens after both, using whatever
-  // Arrange last computed. Recomputed every frame for now, no dirty-flag caching; this is a
-  // start-menu/settings-menu scale UI, not a performance concern yet.
+  // Base of the retained UI tree. A plain Widget with no children/rendering is a valid, invisible
+  // spacer - not abstract. Layout is two passes: Measure (bottom-up, "how much space do you
+  // want") then Arrange (top-down, "here's what you get"); Render reuses the last Arrange result.
+  // Recomputed every frame, no dirty-flag caching - fine at this UI's scale.
   class ENGINE_API Widget
   {
   public:
@@ -86,30 +80,22 @@ namespace Engine::UI
     // (whatever's drawn last/on top gets first refusal), falling back to itself.
     virtual Widget *HitTest(float X, float Y);
 
-    // No-op by default; Button (and anything else that wants pointer interaction) overrides these.
-    // Canvas calls them during its input pass, not meant to be called directly by game code.
+    // No-op by default; Canvas calls these during its input pass, not meant to be called
+    // directly by game code.
     virtual void OnPointerEnter();
     virtual void OnPointerLeave();
-    // X/Y are the pointer's position at the moment of the press, in screen pixels (same space as
-    // ComputedRect); Scalar uses this to jump straight to the value under the click, like a
-    // slider, rather than only ever adjusting relative to wherever it happened to start.
+    // X/Y are the pointer's position in screen pixels (same space as ComputedRect).
     virtual void OnPointerDown(float X, float Y);
     virtual void OnPointerUp(bool StillHovered);
 
-    // Fired every frame the pointer stays held down on this widget, after the initial
-    // OnPointerDown and before the eventual OnPointerUp (never on the same frame as either). X/Y
-    // are the pointer's current absolute position (same space as ComputedRect/OnPointerDown);
-    // DeltaX/DeltaY are movement since last frame, for widgets that want relative adjustment
-    // instead. No-op by default; Scalar uses the absolute position so drag always matches
-    // exactly where the pointer is (same mapping OnPointerDown uses), rather than accumulating
-    // per-frame deltas at a separately-tuned sensitivity, which would drift out of sync with it.
+    // Fired every frame the pointer stays held down, between OnPointerDown and OnPointerUp. X/Y
+    // are the current absolute position; DeltaX/DeltaY are movement since last frame, for
+    // widgets that want relative adjustment instead.
     virtual void OnPointerDrag(float X, float Y, float DeltaX, float DeltaY);
 
-    // No-op by default; Canvas calls these when keyboard focus moves to/from this widget
-    // (only ever reachable for widgets with WantsFocus set), and forwards this frame's text
-    // input / key presses here while this widget holds focus. Not meant to be called directly
-    // by game code. Modifiers is the live modifier state (SDL_GetModState()) at the moment
-    // Canvas forwards the key, for Shift/Ctrl-qualified shortcuts (selection, copy/paste).
+    // No-op by default; Canvas calls these when keyboard focus moves to/from this widget (only
+    // reachable with WantsFocus set). Modifiers is the live modifier state at the moment Canvas
+    // forwards the key.
     virtual void OnFocusGained();
     virtual void OnFocusLost();
     virtual void OnTextInput(const std::string &Text);
@@ -132,22 +118,16 @@ namespace Engine::UI
     Rect ComputedRect{};
   };
 
-  // Builder-style construction: every concrete widget's own setters return a self pointer (e.g.
-  // Button *SetColors(...)) so they chain, CreateWidget<T>() just saves writing
-  // std::make_unique<T>() at every call site.
+  // Builder-style construction: concrete widgets' setters return a self pointer so they chain;
+  // this just saves writing std::make_unique<T>() at every call site.
   //
   //   std::unique_ptr<Button> NewButton = CreateWidget<Button>();
   //   NewButton->SetDesiredSize({48.0f, 48.0f})->SetColors(Normal, Hovered, Pressed);
   //   Button *Result = Toolbar->AddSlot(std::move(NewButton), SizeRule::Auto, 1.0f, Alignment::Center, 8.0f);
   //
-  // The chain can't extend into AddSlot/AddRoot/SetContent itself: by the time a widget can
-  // return a self pointer for the next call in the chain, it no longer has access to the
-  // std::unique_ptr that owns it (nothing does, other than the caller's own variable), so there
-  // is no safe way for the widget to hand its own ownership off to a parent from inside a
-  // chained call. Attaching to a parent stays a separate, explicit std::move, same as before.
-  // AddSlot/AddRoot/SetContent are all templated on the widget type they're given, though, so
-  // that std::move still hands back a pointer of the exact concrete type passed in (Button*, not
-  // Widget*), no separate NewButton.get() capture and no manual cast needed to use Result above.
+  // The chain can't extend into AddSlot itself (ownership transfer needs an explicit std::move),
+  // but AddSlot/AddRoot/SetContent are templated on the widget type, so they still hand back a
+  // pointer of the concrete type passed in.
   template <typename T, typename... Args>
   std::unique_ptr<T> CreateWidget(Args &&...ConstructorArgs)
   {

@@ -4,19 +4,16 @@
 
 struct SDL_Window;
 struct SDL_Renderer;
+struct ImGuiContext;
 
 namespace Engine
 {
   class SDLEventDispatcher;
   class Camera;
 
-  // Owns Dear ImGui's setup/teardown and per-frame NewFrame/Render bracketing, shared by any
-  // Game (or future Editor) built on the engine so neither has to touch Dear ImGui setup itself.
-  // Only meaningful when ENGINE_WITH_DEBUG_UI is defined (Debug builds); Dear ImGui's own source
-  // is never compiled into a Release build at all, so every method here is a no-op in Release,
-  // not just unused. This class is still always declared and always an EngineContext member so
-  // consuming code never needs to #ifdef around its existence, only around code that calls into
-  // the ImGui:: API directly (which isn't available to link against in Release).
+  // Owns Dear ImGui's setup/teardown and per-frame NewFrame/Render bracketing. No-op in Release
+  // (ENGINE_WITH_DEBUG_UI undefined); always declared so consuming code doesn't need to #ifdef
+  // around its existence, only around direct ImGui:: calls.
   class ENGINE_API DebugOverlay
   {
   public:
@@ -28,6 +25,11 @@ namespace Engine
 
     void BeginFrame();
     void EndFrame(SDL_Renderer *Renderer, Camera &MainCamera);
+
+    // Engine.dll and Game.exe each link their own separate copy of ImGui (static lib), so their
+    // global contexts start out independent. Pass this to ImGui::SetCurrentContext() in any other
+    // linked copy to point it at this one (nullptr in Release).
+    ImGuiContext *GetImGuiContext() const;
 
   private:
     SDLEventDispatcher &Dispatcher;

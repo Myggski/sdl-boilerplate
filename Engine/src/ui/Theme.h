@@ -43,11 +43,9 @@ namespace Engine::UI::Theme
     inline constexpr Color NavyDark{0x14, 0x23, 0x3a, 255};
   }
 
-  // Semantic roles, chosen by WCAG contrast ratio (relative luminance, not eyeballed) against
-  // TextPrimary: every Normal and Pressed pairing is >=4.5:1 (WCAG AA for text). Hovered dips as
-  // low as ~3.1:1 on a couple of these, a deliberate allowance rather than an oversight, hover is
-  // mouse-only (no keyboard/focus equivalent) and transient, so WCAG's strict text-contrast bar
-  // is conventionally relaxed there as long as it still clears the 3:1 UI-component threshold.
+  // Semantic roles, chosen by WCAG contrast ratio against TextPrimary: Normal/Pressed pairings
+  // are >=4.5:1 (AA for text); Hovered can dip to ~3:1 (the looser UI-component threshold), since
+  // hover is transient and mouse-only.
   inline constexpr Color Background = Palette::NavyDark;
   inline constexpr Color Surface = Palette::Navy;
 
@@ -70,17 +68,12 @@ namespace Engine::UI::Theme
   inline constexpr Color NeutralHovered = Palette::GrayMid;
   inline constexpr Color NeutralPressed = Palette::BrownDark;
 
-  // A standalone highlight/warning color, not the standard interactive accent: fill bars,
-  // checkmarks, and selection highlights all use PrimaryNormal instead (see Scalar, Checkbox,
-  // Dropdown), since gold reads as a warning next to a widget's own neutral-gray box (see
-  // Scalar.h's FillColor comment). Reach for this for a genuinely separate, attention-grabbing
-  // highlight, not as "the" accent color for interactive widget state.
+  // Standalone highlight/warning color, not the interactive accent - fill bars, checkmarks, and
+  // selection highlights use PrimaryNormal instead (gold reads as a warning, not a state).
   inline constexpr Color Accent = Palette::Gold;
 
-  // 8px base unit grid (the one piece of Material Design's system this engine follows; its
-  // specific visual chrome, drop shadows, ripples, rounded corners, would clash with a Lospec
-  // pixel-art palette, so this is spacing/sizing discipline only, not a visual style). Consistent
-  // paddings/gaps across widgets should pull from this rather than picking arbitrary numbers.
+  // 8px base unit grid. Spacing/sizing discipline only, not a visual style (Material's chrome -
+  // shadows, ripples, rounded corners - would clash with the pixel-art palette).
   namespace Spacing
   {
     inline constexpr float XSmall = 4.0f;
@@ -92,40 +85,26 @@ namespace Engine::UI::Theme
     inline constexpr float XXXLarge = 64.0f;
   }
 
-  // Minimum interactive touch/click target size: small hit areas are hard to click precisely,
-  // especially for anyone with reduced fine motor control. Matches Spacing::XXLarge; kept as its
-  // own name since the two mean different things even though they're numerically the same today.
+  // Minimum interactive touch/click target size. Matches Spacing::XXLarge; kept as its own name
+  // since the two mean different things even though numerically equal today.
   inline constexpr float MinTouchTarget = 48.0f;
 
-  // Shared row height for single-line data-entry controls (Scalar, Dropdown, TextInput): the same
-  // widgets a form/toolbar would line up side by side, so they should read as one family rather
-  // than each guessing its own height. Matches Spacing::XLarge; kept as its own name for the same
-  // reason as MinTouchTarget above. Deliberately doesn't cover Checkbox (a small square toggle by
-  // design, meant to pair with its own label rather than match a row) or Button (spans everything
-  // from small icon buttons to large touch targets, no single height fits its range of uses).
+  // Shared row height for single-line data-entry controls (Scalar, Dropdown, TextInput), so a
+  // form/toolbar lining them up side by side reads as one family. Doesn't cover Checkbox (a small
+  // toggle) or Button (spans icon buttons to large touch targets).
   inline constexpr float InputHeight = Spacing::XLarge;
 
-  // Default text appearance for widgets that build a Text label on the caller's behalf (see
-  // Engine::UI::CreateLabel, Scalar::SetFont(AssetManager&, ...), Dropdown's equivalent), so call
-  // sites only need to say what actually differs from the theme's defaults, e.g.
-  // CreateLabel(Assets, "Hi", {.PointSize = 20}), not repeat every field every time. A struct
-  // rather than a growing parameter list specifically so adding a new field later (e.g. a
-  // FontPath override) doesn't mean touching every function that takes one of these.
+  // Default text appearance for widgets that build a Text label on the caller's behalf, so a call
+  // site only needs to say what differs from the default, e.g. {.PointSize = 20}.
   struct TextStyle
   {
     int PointSize = 16;
     Color Color = TextPrimary;
   };
 
-  // A small type scale (Header1/2/3, Body, Caption), the same idea as HTML's h1-h6+p or Material's
-  // Headline/Title/Body/Label tiers, just fewer tiers, matching this engine's "start small" scope.
-  // Sizes step down by roughly 1.25x-1.3x per level (a common type-scale ratio), rounded to values
-  // that read cleanly rather than hitting an exact ratio. Body is the same 16pt/TextPrimary as
-  // TextStyle{}'s own default, so existing CreateLabel(Assets, text) calls with no style argument
-  // are already "Body" text, not a separate, different default. Caption uses TextSecondary (the
-  // same de-emphasized color WPF/Material captions conventionally use), the other four use
-  // TextPrimary; there is no bold/weight variant yet, only one weight of the default font is
-  // loaded, so size and color are the only two things distinguishing a level for now.
+  // A small type scale (Header1/2/3, Body, Caption), sizes stepping down ~1.25-1.3x per level.
+  // Body matches TextStyle{}'s own default, so an unstyled CreateLabel() call is already "Body".
+  // Only one font weight is loaded, so size and color are the only distinguishing factors.
   namespace TextStyles
   {
     inline constexpr TextStyle Header1{32, TextPrimary};

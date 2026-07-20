@@ -11,17 +11,23 @@ namespace Engine
   public:
     GameEngineData(
         const std::function<bool(Engine::EngineContext &)> &Startup,
+        std::function<void(Engine::EngineContext &)> PreUpdate,
         std::function<void(Engine::EngineContext &, float)> Update,
+        std::function<void(Engine::EngineContext &, float)> PostUpdate,
         std::function<void(Engine::EngineContext &)> Draw,
         std::function<void(Engine::EngineContext &)> Shutdown)
         : Startup(Startup),
+          PreUpdate(PreUpdate),
           Update(Update),
+          PostUpdate(PostUpdate),
           Draw(Draw),
           Shutdown(Shutdown) {}
 
   public:
     const std::function<bool(Engine::EngineContext &)> Startup;
+    const std::function<void(Engine::EngineContext &)> PreUpdate;
     const std::function<void(Engine::EngineContext &, float)> Update;
+    const std::function<void(Engine::EngineContext &, float)> PostUpdate;
     const std::function<void(Engine::EngineContext &)> Draw;
     const std::function<void(Engine::EngineContext &)> Shutdown;
   };

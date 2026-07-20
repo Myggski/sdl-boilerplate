@@ -5,6 +5,10 @@ project(sdl-boilerplate-game)
 set(SOURCE_FILES
     Game.cpp
     framework/Bootstrap.cpp
+    framework/CameraFollow.cpp
+    framework/NetworkPlayers.cpp
+    framework/NetworkRPCs.cpp
+    framework/Toolbar.cpp
     ${CMAKE_SOURCE_DIR}/Engine/EntryPoint.h # Include EntryPoint.h if it contains main()
 )
 
@@ -31,10 +35,17 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Engine
 )
 
-# Link against Engine library (sdl-boilerplate-engine.dll). Dear ImGui's headers/include dirs and
-# the ENGINE_WITH_DEBUG_UI compile definition (Debug builds only) come along publicly from Engine.
+# Game.exe links its own copy of ImGui (static lib, Debug only); synced with Engine.dll's copy via
+# DebugOverlay::GetImGuiContext() + ImGui::SetCurrentContext() in Game::Startup.
+find_package(imgui CONFIG REQUIRED)
+
+# Link against Engine library (sdl-boilerplate-engine.dll). ENGINE_WITH_DEBUG_UI (the compile
+# definition guarding ImGui:: calls) comes along publicly from Engine. shell32 is for
+# CommandLineToArgvW (Game::Startup's temporary --host/--connect dev flag parsing).
 target_link_libraries(${PROJECT_NAME} PRIVATE
     sdl-boilerplate-engine
+    shell32
+    $<$<CONFIG:Debug>:imgui::imgui>
 )
 
 # Optionally set the output executable name

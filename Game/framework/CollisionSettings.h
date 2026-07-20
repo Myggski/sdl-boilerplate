@@ -14,6 +14,11 @@ namespace Game
     constexpr uint32_t Player = 1u << 0;
     constexpr uint32_t Terrain = 1u << 1;
     constexpr uint32_t Prop = 1u << 2;
+
+    // A movable/toggleable wall-style trap: physically solid like Terrain, but dynamic (not
+    // IsStatic), so it also needs its own layer bit for PathfindingSettings.h's blocking mask,
+    // which can't key off IsStatic (see that file's comment for why).
+    constexpr uint32_t DeployableWall = 1u << 3;
   }
 
   // Which layers interact, declared once per pair, symmetrically, see
@@ -29,5 +34,7 @@ namespace Game
       {Layers::Player, Layers::Terrain},
       {Layers::Player, Layers::Prop},
       {Layers::Terrain, Layers::Prop},
+      {Layers::Player, Layers::DeployableWall},
+      {Layers::Prop, Layers::DeployableWall},
   });
 }

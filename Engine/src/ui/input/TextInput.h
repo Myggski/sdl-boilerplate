@@ -16,16 +16,11 @@ namespace Engine
 
 namespace Engine::UI
 {
-  // A single-line text entry field: click to focus and position the cursor, type to insert at
-  // the cursor, Left/Right to move it (Shift+Left/Right to extend a selection, click-drag to
-  // select by mouse), Backspace/Delete to remove around it, Ctrl+A/C/X/V for select-all and
-  // clipboard. Content wider than the field scrolls horizontally to keep the cursor visible,
-  // rather than clipping it out of view; a thin FullBorderColor outline appears once MaxLength is
-  // reached. Shows Placeholder in PlaceholderColor whenever Text is empty, swapping to Text in
-  // TextColor as soon as anything is typed. Deliberately doesn't reuse the Text widget internally
-  // (Text always center-aligns with no way to query its measured width, and text fields
-  // conventionally left-align instead); owns its own small texture-cache render path, closely
-  // mirroring Text.cpp's.
+  // A single-line text entry field: click to focus and position the cursor, type to insert,
+  // Left/Right to move it (Shift to extend a selection, click-drag to select by mouse),
+  // Backspace/Delete, Ctrl+A/C/X/V. Overflowing content scrolls horizontally rather than
+  // clipping. Doesn't reuse the Text widget (it always center-aligns; text fields left-align) -
+  // owns its own small texture-cache render path instead.
   class ENGINE_API TextInput : public Widget
   {
   public:
@@ -73,10 +68,8 @@ namespace Engine::UI
   private:
     void RebuildTextureIfNeeded(SDL_Renderer *Renderer);
 
-    // Adjusts ScrollOffsetPixels (if at all) so CursorPosition's pixel offset stays within the
-    // visible text area, same idea as any text field: typing/moving past either edge scrolls the
-    // content rather than letting the cursor run out of view. Called once per Render(), not on
-    // every mutation, cheap enough at this UI's scale and keeps the scroll math in one place.
+    // Adjusts ScrollOffsetPixels so CursorPosition stays within the visible text area. Called
+    // once per Render(), not on every mutation - cheap enough at this UI's scale.
     void UpdateScrollOffset();
 
     // Codepoint index nearest to a click/drag at LocalX (relative to the text's own left edge,
@@ -105,21 +98,16 @@ namespace Engine::UI
 
     Color NormalColor = Theme::NeutralNormal;
 
-    // Theme::PrimaryHovered (blue family), not Theme::NeutralHovered (a warm gray/brown that
-    // reads unrelated next to FocusedColor's blue below), same reasoning as Dropdown's
-    // HoveredColor/PressedColor. FocusedColor is the darker Theme::PrimaryPressed, same darkened
-    // feedback Scalar gives while being dragged, so focus reads as "actively engaged" rather than
-    // just another hover state.
+    // Primary* family, not Neutral*, so hover/focus read as the same interactive family.
+    // FocusedColor is the darker shade, reading as more engaged than a plain hover.
     Color HoveredColor = Theme::PrimaryHovered;
     Color FocusedColor = Theme::PrimaryPressed;
     Color TextColor = Theme::TextPrimary;
     Color PlaceholderColor = Theme::TextSecondary;
     Color SelectionColor = Theme::PrimaryHovered;
 
-    // Theme::PrimaryNormal: sits between PrimaryHovered (background while hovered) and
-    // PrimaryPressed (background while focused), so the outline still reads clearly against
-    // either one, while staying in the same blue family as the rest of this widget's states
-    // rather than the gold Theme::Accent warning color.
+    // PrimaryNormal sits between PrimaryHovered/PrimaryPressed so the outline reads clearly
+    // against either background.
     Color FullBorderColor = Theme::PrimaryNormal;
 
     bool IsHovered = false;

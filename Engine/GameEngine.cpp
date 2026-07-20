@@ -1,7 +1,9 @@
 #include "GameEngine.h"
+#include "RPC.h"
 #include <SDL3/SDL.h>
 #include <stdexcept>
 #include <chrono>
+#include <deque>
 #include <SDL3_image/SDL_image.h>
 
 namespace Engine
@@ -50,9 +52,10 @@ namespace Engine
 
     IsGameRunning = true;
 
-    if (EngineData != nullptr)
+    if (EngineData != nullptr && !EngineData->Startup(*Context))
     {
-      EngineData->Startup(*Context);
+      SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Game::Startup failed, aborting.\n");
+      return false;
     }
 
     return true;
@@ -63,6 +66,13 @@ namespace Engine
     constexpr float FixedTimeStep = 1.0f / 60.0f;
     constexpr uint8_t MaxFrameSkip = 5;
     float Lag = 0.0f;
+
+    // Buffered once per real frame (below, right after Network.Poll()), drained once per
+    // fixed-step tick (in the loop below) - same real-frame-buffer/fixed-step-drain split
+    // PendingMoveCommands uses for input, for the same reason: a discrete event read at real-frame
+    // cadence could be missed by a fixed-step Update() that runs zero times that frame.
+    std::deque<ConnectionEvent> PendingConnectionEvents;
+    std::deque<NetworkMessage> PendingNetworkMessages;
 
     Engine::Camera &MainCamera = Context->MainCamera;
 
@@ -88,16 +98,66 @@ namespace Engine
         break;
       }
 
+      // Once per real frame, before anything below reads network state - PreUpdate's own comment
+      // calls out "a remote peer's commands feeding the same queue" as local input does, so this
+      // frame's messages need to already be available by the time PreUpdate runs.
+      Context->Network.Poll();
+
+      // Buffer only - not fired/dispatched until the fixed-step loop below, so connection events
+      // and messages land on the same tick as the gameplay state they affect (spawning entities,
+      // attaching PathFollowComponent), consistent with everything else Update() below does.
+      for (ConnectionEvent &Event : Context->Network.PollConnectionEvents())
+      {
+        PendingConnectionEvents.push_back(Event);
+      }
+      for (NetworkMessage &Message : Context->Network.PollMessages())
+      {
+        PendingNetworkMessages.push_back(std::move(Message));
+      }
+
       // UI layout/hit-testing happen here, before gameplay reads input, so this frame's pointer
-      // claim (see InputManager::SetPointerClaimed) is already set by the time Game::Update()
-      // asks, not one frame late.
+      // claim (see InputManager::SetPointerClaimed) is already set by the time PreUpdate asks.
       Context->UICanvas.UpdateLayout(Renderer);
       Context->UICanvas.ProcessInput(Context->Input);
+
+      // Once per real (rendered) frame, same cadence Canvas::ProcessInput above just ran at, and
+      // before the fixed-step loop below so anything it latches this frame is visible to every
+      // Update() call that follows, not delayed to the next real frame. This is where discrete
+      // input (e.g. IsMouseButtonJustPressed) is safe to read: Update() below can run zero times
+      // in a given real frame, so a one-frame input edge read there can be silently missed.
+      if (EngineData)
+      {
+        EngineData->PreUpdate(*Context);
+      }
 
       // Fixed update loop
       uint8_t UpdateCount{0};
       while (Lag >= FixedTimeStep && UpdateCount < MaxFrameSkip)
       {
+        // Connection events fully before messages: both can arrive in the same Poll() above, and
+        // a message can reference a connection whose spawn hasn't happened yet otherwise. Drains
+        // fully on this loop's first iteration each real frame - later iterations see empty
+        // deques and no-op, same as if this ran once per real frame instead of per tick.
+        while (!PendingConnectionEvents.empty())
+        {
+          ConnectionEvent Event = PendingConnectionEvents.front();
+          PendingConnectionEvents.pop_front();
+          if (Event.Connected)
+          {
+            Context->Network.OnClientConnected().Broadcast(Event.ConnectionId);
+          }
+          else
+          {
+            Context->Network.OnClientDisconnected().Broadcast(Event.ConnectionId);
+          }
+        }
+        while (!PendingNetworkMessages.empty())
+        {
+          NetworkMessage Message = std::move(PendingNetworkMessages.front());
+          PendingNetworkMessages.pop_front();
+          Engine::RPC::Dispatch(*Context, Message.ConnectionId, Message.Payload);
+        }
+
         Context->World.RunSystems(FixedTimeStep);
         if (EngineData)
         {
@@ -105,6 +165,12 @@ namespace Engine
         }
         Lag -= FixedTimeStep;
         ++UpdateCount;
+      }
+
+      // Runs once per real frame, after this frame's Update() calls have moved things.
+      if (EngineData)
+      {
+        EngineData->PostUpdate(*Context, DeltaTime);
       }
 
       MainCamera.PreRender();

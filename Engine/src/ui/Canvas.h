@@ -15,16 +15,11 @@ namespace Engine
 namespace Engine::UI
 {
   // Owns the UI tree(s) for the whole game: an ordered list of independent root widgets, each
-  // laid out to fill the screen and rendered in order (later root = drawn on top). Holding a
-  // list rather than a single root is deliberate groundwork for a future CommonUI-style layer
-  // stack (e.g. HUD, then a menu on top of it), even though there's no layer concept yet, just
-  // ordering.
+  // laid out to fill the screen and rendered in order (later root = drawn on top).
   //
-  // Three separate steps, called at different points in the frame (see GameEngine::Update()):
-  // UpdateLayout (Measure+Arrange, no drawing) has to happen before ProcessInput (hit-testing
-  // needs fresh rects) which has to happen before gameplay reads input (so this frame's claim is
-  // already set, not last frame's); Render happens later, in the render pass, reusing the same
-  // rects UpdateLayout already computed rather than redoing layout.
+  // Three steps, called at different points in the frame (see GameEngine::Update()):
+  // UpdateLayout (Measure+Arrange) must run before ProcessInput (hit-testing needs fresh rects),
+  // which must run before gameplay reads input; Render runs later, reusing UpdateLayout's rects.
   class ENGINE_API Canvas
   {
   public:
