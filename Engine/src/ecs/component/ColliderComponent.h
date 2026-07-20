@@ -11,16 +11,12 @@ namespace Engine
     Circle
   };
 
-  // One component covers both shapes (the ECS's ForEach is AND-only, so one shape-dispatching
-  // type is far simpler than two types needing OR-style queries to let AABB and Circle collide
-  // with each other). CollisionSystem reads Shape to decide which fields (HalfExtents vs Radius)
-  // apply. Offset/HalfExtents/Radius are deliberately center-based (Offset is added to
-  // TransformComponent::Position to get this collider's CENTER), unlike Rect's top-left
-  // convention used for rendering: circle/AABB overlap math wants a center.
+  // One component covers both shapes (the ECS's ForEach is AND-only, so a single
+  // shape-dispatching type is simpler than two types needing OR-style queries). Offset is added
+  // to TransformComponent::Position to get this collider's CENTER, unlike Rect's top-left
+  // convention - overlap math wants a center.
   //
-  // No Mask: which layers interact is declared once, symmetrically, in a CollisionMatrix (see
-  // CollisionMatrix.h) rather than per-collider, so there is one place to edit a relationship
-  // instead of two masks that can drift out of sync.
+  // No Mask: layer interactions are declared once, symmetrically, in CollisionMatrix instead.
   struct ENGINE_API ColliderComponent
   {
   public:
